@@ -1,46 +1,64 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { Badge, ButtonLink, Card, EmptyState, ErrorState, LoadingState, TextInput } from "@/components/ui";
+import { Badge, ButtonLink, Card, EmptyState, ErrorState } from "@/components/ui";
+import { createClient } from "@/lib/supabase/server";
 
-const projects = [
-  { title: "Portable water purifier", updated: "Updated 2 hours ago", stage: "Clarification", progress: 42, tone: "accent" as const, note: "1 question needs your input" },
-  { title: "Adaptive bicycle light", updated: "Updated yesterday", stage: "Patent search", progress: 63, tone: "default" as const, note: "Searching related patents" },
-  { title: "Fold-flat plant carrier", updated: "Updated Jul 16", stage: "Draft", progress: 88, tone: "success" as const, note: "Draft ready for review" },
-];
+type InventionCase = {
+  id: string;
+  title: string;
+  development_stage: string;
+  publicly_disclosed: boolean;
+  previously_sold: boolean;
+  previously_filed: boolean;
+};
 
-export default function DashboardPage() {
+function formatStage(stage: string) {
+  return stage.replaceAll("_", " ").replace(/^./, (character) => character.toUpperCase());
+}
+
+export default async function DashboardPage() {
+  const supabase = await createClient();
+  const { data: authData } = await supabase.auth.getClaims();
+  const userId = authData?.claims?.sub;
+
+  if (!userId) redirect("/login");
+
+  const { data, error } = await supabase
+    .from("invention_cases")
+    .select("id,title,development_stage,publicly_disclosed,previously_sold,previously_filed")
+    .eq("user_id", userId)
+    .order("id", { ascending: false });
+
+  const inventions = (data ?? []) as InventionCase[];
+  const disclosedCount = inventions.filter((item) => item.publicly_disclosed).length;
+  const prototypeCount = inventions.filter((item) => item.development_stage !== "concept").length;
+
   return <DashboardShell>
     <div className="dashboard-heading">
-      <div><p className="eyebrow">WORKSPACE</p><h1>Good morning, Alex.</h1><p>Pick up where you left off or start something new.</p></div>
-      <ButtonLink href="#projects" size="large"><span aria-hidden="true">＋</span> New invention</ButtonLink>
+      <div><p className="eyebrow">WORKSPACE</p><h1>Your inventions.</h1><p>Review existing cases or capture a new idea.</p></div>
+      <ButtonLink href="/dashboard/inventions/new" size="large"><span aria-hidden="true">＋</span> New invention</ButtonLink>
     </div>
 
     <section className="summary-grid" aria-label="Workspace summary">
-      <Card><span className="summary-icon violet">⌁</span><div><small>ACTIVE PROJECTS</small><strong>3</strong><p>Across three workflow stages</p></div></Card>
-      <Card><span className="summary-icon amber">?</span><div><small>NEEDS ATTENTION</small><strong>1</strong><p>Clarification waiting for you</p></div></Card>
-      <Card><span className="summary-icon green">✓</span><div><small>DRAFTS READY</small><strong>1</strong><p>Ready to review and edit</p></div></Card>
+      <Card><span className="summary-icon violet">⌁</span><div><small>TOTAL INVENTIONS</small><strong>{inventions.length}</strong><p>Saved to your private workspace</p></div></Card>
+      <Card><span className="summary-icon amber">↗</span><div><small>PUBLICLY DISCLOSED</small><strong>{disclosedCount}</strong><p>Marked as previously disclosed</p></div></Card>
+      <Card><span className="summary-icon green">◇</span><div><small>BEYOND CONCEPT</small><strong>{prototypeCount}</strong><p>Prototype, testing, or production</p></div></Card>
     </section>
 
     <section className="projects-section" id="projects">
-      <div className="section-row"><div><h2>Your inventions</h2><p>All active patent-assistance projects</p></div><TextInput label="Search projects" placeholder="Search inventions…" type="search" /></div>
-      <div className="project-grid">
-        {projects.map((project) => <Card className="project-card" key={project.title}>
-          <div className="project-card-top"><span className="project-glyph" aria-hidden="true">◇</span><Badge tone={project.tone}>{project.stage}</Badge><button aria-label={`More options for ${project.title}`} type="button">•••</button></div>
-          <h3>{project.title}</h3><p>{project.updated}</p>
-          <div className="progress-meta"><span>Progress</span><strong>{project.progress}%</strong></div>
-          <div className="progress-track"><span style={{ width: `${project.progress}%` }} /></div>
-          <div className="project-note"><span aria-hidden="true">{project.progress === 88 ? "✓" : project.progress === 63 ? "⌕" : "?"}</span>{project.note}</div>
-        </Card>)}
-        <button className="new-project-card" type="button"><span>＋</span><strong>Start a new invention</strong><small>Describe an idea and build from there</small></button>
-      </div>
+      <div className="section-row"><div><h2>Your inventions</h2><p>Cases owned by your account</p></div></div>
+      {error ? <ErrorState /> : inventions.length === 0 ? <div className="dashboard-empty"><EmptyState /><ButtonLink href="/dashboard/inventions/new">Create your first invention</ButtonLink></div> : <div className="project-grid">
+        {inventions.map((invention) => {
+          const priorActivity = [invention.publicly_disclosed, invention.previously_sold, invention.previously_filed].filter(Boolean).length;
+          return <Card className="project-card" key={invention.id}>
+            <div className="project-card-top"><span className="project-glyph" aria-hidden="true">◇</span><Badge tone={invention.development_stage === "concept" ? "neutral" : "success"}>{formatStage(invention.development_stage)}</Badge></div>
+            <h3><Link href={`/dashboard/inventions/${invention.id}`}>{invention.title}</Link></h3><p>Private invention case</p>
+            <div className="project-note"><span aria-hidden="true">{priorActivity ? "!" : "✓"}</span>{priorActivity ? `${priorActivity} prior activity ${priorActivity === 1 ? "answer" : "answers"} marked yes` : "No prior activity reported"}</div>
+          </Card>;
+        })}
+        <Link className="new-project-card" href="/dashboard/inventions/new"><span>＋</span><strong>Start a new invention</strong><small>Describe an idea and build from there</small></Link>
+      </div>}
     </section>
-
-    <section className="workflow-status">
-      <div className="section-row"><div><h2>How your work progresses</h2><p>Eight focused stages, with your review built in.</p></div></div>
-      <Card className="mini-flow">
-        {["Describe", "Images", "Analysis", "Clarify", "Search", "Overlap", "Draft", "Download"].map((label, index) => <div key={label}><span>{index + 1}</span><small>{label}</small></div>)}
-      </Card>
-    </section>
-
-    <details className="state-gallery"><summary>Reusable interface states</summary><div><LoadingState /><EmptyState /><ErrorState /></div></details>
   </DashboardShell>;
 }
