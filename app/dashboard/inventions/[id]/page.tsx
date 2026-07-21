@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { InventionAnalysis } from "@/components/invention-analysis";
 import { InventionImages, type InventionImage } from "@/components/invention-images";
 import { Badge, Card } from "@/components/ui";
+import type { AIStatus } from "@/lib/ai/types";
 import { createClient } from "@/lib/supabase/server";
 
 const BUCKET = "invention-images";
@@ -17,6 +19,10 @@ type Invention = {
   publicly_disclosed: boolean;
   previously_sold: boolean;
   previously_filed: boolean;
+  ai_status: AIStatus | null;
+  ai_analysis: unknown;
+  clarification_questions: unknown;
+  approved_features: unknown;
 };
 
 type ImageRow = Omit<InventionImage, "signedUrl"> & {
@@ -39,7 +45,7 @@ export default async function InventionDetailPage({ params }: { params: Promise<
 
   const { data: inventionData, error: inventionError } = await supabase
     .from("invention_cases")
-    .select("id,title,problem_statement,invention_description,development_stage,publicly_disclosed,previously_sold,previously_filed")
+    .select("id,title,problem_statement,invention_description,development_stage,publicly_disclosed,previously_sold,previously_filed,ai_status,ai_analysis,clarification_questions,approved_features")
     .eq("id", id)
     .eq("user_id", userId)
     .maybeSingle();
@@ -86,6 +92,14 @@ export default async function InventionDetailPage({ params }: { params: Promise<
       <Card className="invention-copy"><span>INVENTION DESCRIPTION</span><p>{invention.invention_description}</p></Card>
       <Card className="prior-activity"><span>PREVIOUS ACTIVITY</span><dl><div><dt>Publicly disclosed</dt><dd>{invention.publicly_disclosed ? "Yes" : "No"}</dd></div><div><dt>Previously sold</dt><dd>{invention.previously_sold ? "Yes" : "No"}</dd></div><div><dt>Previously filed</dt><dd>{invention.previously_filed ? "Yes" : "No"}</dd></div></dl></Card>
     </div>
+
+    <InventionAnalysis
+      inventionId={invention.id}
+      status={invention.ai_status ?? "NOT_STARTED"}
+      aiAnalysis={invention.ai_analysis}
+      clarificationQuestions={invention.clarification_questions}
+      approvedFeatures={invention.approved_features}
+    />
 
     {imagesError && <div className="image-action-error detail-image-error" role="alert">{imagesError}</div>}
     {!imageError && <InventionImages inventionId={invention.id} images={images} />}
