@@ -7,7 +7,8 @@ type EpoOpsErrorKind =
   | "token-network"
   | "token-response"
   | "access-network"
-  | "access-response";
+  | "access-response"
+  | "access-payload";
 
 type EpoOpsTokenResponse = {
   access_token?: unknown;
@@ -133,6 +134,24 @@ export class EpoOpsClient {
     const response = await this.request(CONNECTION_CHECK_PATH);
     await response.body?.cancel();
   }
+
+  async searchPublishedData(query: string, limit = 10): Promise<unknown> {
+    const rangeEnd = Math.min(Math.max(Math.trunc(limit), 1), 100);
+    const params = new URLSearchParams({
+      q: query,
+      Range: `1-${rangeEnd}`,
+    });
+    const response = await this.request(
+      `/rest-services/published-data/search/biblio?${params.toString()}`,
+      { headers: { Accept: "application/json" } },
+    );
+
+    try {
+      return await response.json();
+    } catch {
+      throw new EpoOpsError("access-payload", response.status);
+    }
+  }
 }
 
 export function formatEpoOpsError(error: unknown): string {
@@ -155,5 +174,7 @@ export function formatEpoOpsError(error: unknown): string {
       return error.status
         ? `EPO OPS access error: HTTP ${error.status}`
         : "EPO OPS access error: invalid response";
+    case "access-payload":
+      return "EPO OPS access error: invalid response";
   }
 }

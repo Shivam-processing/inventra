@@ -4,8 +4,10 @@ import { notFound, redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { InventionAnalysis } from "@/components/invention-analysis";
 import { InventionImages, type InventionImage } from "@/components/invention-images";
+import { PatentSearch, type PatentSearchRecord } from "@/components/patent-search";
 import { Badge, Card } from "@/components/ui";
 import type { AIStatus } from "@/lib/ai/types";
+import type { PatentSearchResult } from "@/lib/patents/patent-search";
 import { createClient } from "@/lib/supabase/server";
 
 const BUCKET = "invention-images";
@@ -27,6 +29,13 @@ type Invention = {
 
 type ImageRow = Omit<InventionImage, "signedUrl"> & {
   storage_path: string;
+};
+
+type PatentSearchRow = {
+  status: string;
+  search_terms: unknown;
+  results: unknown;
+  error_message: string | null;
 };
 
 function formatLabel(value: string) {
@@ -85,12 +94,29 @@ export default async function InventionDetailPage({ params }: { params: Promise<
   const approvedFeatures = Array.isArray(invention.approved_features)
     ? invention.approved_features.filter((feature): feature is string => typeof feature === "string")
     : [];
+  const featuresApproved = status === "APPROVED" && approvedFeatures.length > 0;
+  const { data: patentSearchData, error: patentSearchError } = await supabase
+    .from("patent_searches")
+    .select("status,search_terms,results,error_message")
+    .eq("invention_id", invention.id)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const searchRow = patentSearchData as PatentSearchRow | null;
+  const patentSearch: PatentSearchRecord | null = searchRow ? {
+    status: searchRow.status,
+    searchTerms: Array.isArray(searchRow.search_terms) ? searchRow.search_terms.filter((term): term is string => typeof term === "string") : [],
+    results: Array.isArray(searchRow.results) ? searchRow.results as PatentSearchResult[] : [],
+    errorMessage: searchRow.error_message,
+  } : null;
+  const patentSearchComplete = patentSearch?.status === "COMPLETED";
   const progress = [
     ["Details", true],
     ["Images", images.length > 0],
     ["Analysis", status === "NEEDS_REVIEW" || status === "APPROVED"],
-    ["Features", status === "APPROVED"],
-    ["Patent Search", false],
+    ["Features", featuresApproved],
+    ["Patent Search", patentSearchComplete],
     ["Report", false],
     ["Draft", false],
   ] as const;
@@ -102,7 +128,7 @@ export default async function InventionDetailPage({ params }: { params: Promise<
     </div>
 
     <nav className="detail-progress" aria-label="Invention progress">
-      {progress.map(([label, complete], index) => <a className={complete ? "complete" : index === progress.findIndex((item) => !item[1]) ? "current" : ""} href={index < 4 ? `#step-${label.toLowerCase().replace(" ", "-")}` : undefined} aria-disabled={index >= 4} key={label}><span>{complete ? "✓" : index + 1}</span><small>{label}</small></a>)}
+      {progress.map(([label, complete], index) => <a className={complete ? "complete" : index === progress.findIndex((item) => !item[1]) ? "current" : ""} href={index < 5 ? `#step-${label.toLowerCase().replace(" ", "-")}` : undefined} aria-disabled={index >= 5} key={label}><span>{complete ? "✓" : index + 1}</span><small>{label}</small></a>)}
     </nav>
 
     <div className="detail-step-stack">
@@ -128,6 +154,11 @@ export default async function InventionDetailPage({ params }: { params: Promise<
       <details className="detail-step-card" id="step-features" open>
         <summary><span>04</span><div><strong>Approved features</strong><small>The reviewed feature set used by later stages</small></div><i aria-hidden="true">⌄</i></summary>
         <div className="detail-step-content">{approvedFeatures.length ? <ul className="approved-feature-list">{approvedFeatures.map((feature, index) => <li key={`${feature}-${index}`}><span>✓</span>{feature}</li>)}</ul> : <div className="feature-empty"><span>◇</span><div><strong>No approved features yet</strong><p>Complete AI analysis and approve the extracted feature set.</p></div></div>}</div>
+      </details>
+
+      <details className="detail-step-card" id="step-patent-search" open>
+        <summary><span>05</span><div><strong>Patent search</strong><small>Find similar publications in EPO OPS</small></div><i aria-hidden="true">⌄</i></summary>
+        <div className="detail-step-content"><PatentSearch inventionId={invention.id} featuresApproved={featuresApproved} search={patentSearch} loadError={patentSearchError ? "Previous patent searches could not be loaded." : undefined} /></div>
       </details>
     </div>
   </DashboardShell>;
