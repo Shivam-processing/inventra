@@ -4,19 +4,36 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { MockAIProvider } from "@/lib/ai/mock-provider";
+import { OpenAIProvider, OpenAIProviderError } from "@/lib/ai/openai-provider";
+import type { InventionAnalysisInput, InventionAnalysisResult } from "@/lib/ai/types";
 import { createClient } from "@/lib/supabase/server";
 
 export type AnalysisActionState = { error?: string; message?: string };
 
-function developmentError(error: unknown) {
-  if (error && typeof error === "object") {
-    const value = error as { code?: unknown; message?: unknown };
-    const code = typeof value.code === "string" ? ` [${value.code}]` : "";
-    const message = typeof value.message === "string" ? value.message : "Unexpected provider or database error.";
-    return `Mock analysis could not be saved${code}: ${message}`;
-  }
+const IMAGE_BUCKET = "invention-images";
+const SIGNED_URL_TTL_SECONDS = 300;
 
-  return "Mock analysis could not be saved: Unexpected provider or database error.";
+type AnalysisProvider = {
+  analyse(input: InventionAnalysisInput): Promise<InventionAnalysisResult>;
+};
+
+function getProvider(): { name: "mock" | "openai"; provider: AnalysisProvider } {
+  const name = (process.env.AI_PROVIDER || "mock").toLowerCase();
+  if (name === "mock") return { name, provider: new MockAIProvider() };
+  if (name === "openai") return { name, provider: new OpenAIProvider() };
+  throw new Error("Unsupported AI_PROVIDER configuration.");
+}
+
+function safeAnalysisError(error: unknown) {
+  if (error instanceof OpenAIProviderError) {
+    if (process.env.NODE_ENV === "development") {
+      const identifier = error.details.code ?? error.details.type ?? "request_failed";
+      const status = error.details.status ? ` ${error.details.status}` : "";
+      return `OpenAI error${status}: ${identifier}`;
+    }
+    return error.message;
+  }
+  return "The invention analysis could not be completed or saved. Please try again.";
 }
 
 const listField = z.array(z.string().trim().min(2)).min(1);
@@ -66,16 +83,41 @@ export async function analyseInvention(_: AnalysisActionState, formData: FormDat
     .eq("user_id", userId);
 
   if (processingError) {
-    console.error("[mock-analysis] Failed to set PROCESSING status", processingError);
-    return { error: developmentError(processingError) };
+    console.error("[invention-analysis] Failed to set PROCESSING status", processingError);
+    return { error: "The invention analysis could not be started. Please try again." };
   }
 
   try {
-    const provider = new MockAIProvider();
+    const { name: providerName, provider } = getProvider();
+    let imageUrls: string[] = [];
+
+    if (providerName === "openai") {
+      const { data: imageRows, error: imageError } = await supabase
+        .from("invention_images")
+        .select("storage_path")
+        .eq("invention_id", invention.id)
+        .eq("user_id", userId)
+        .limit(3);
+
+      if (imageError) throw imageError;
+
+      const storagePaths = (imageRows ?? []).map((image) => image.storage_path);
+      if (storagePaths.length) {
+        const { data: signedImages, error: signedError } = await supabase.storage
+          .from(IMAGE_BUCKET)
+          .createSignedUrls(storagePaths, SIGNED_URL_TTL_SECONDS);
+
+        if (signedError || !signedImages) throw signedError ?? new Error("Signed image URLs were not created.");
+        imageUrls = signedImages.flatMap((image) => image.signedUrl ? [image.signedUrl] : []);
+        if (imageUrls.length !== storagePaths.length) throw new Error("A signed image URL was not created.");
+      }
+    }
+
     const result = await provider.analyse({
       title: invention.title,
       problemStatement: invention.problem_statement,
       description: invention.invention_description,
+      imageUrls,
     });
     const { error } = await supabase
       .from("invention_cases")
@@ -90,13 +132,13 @@ export async function analyseInvention(_: AnalysisActionState, formData: FormDat
 
     if (error) throw error;
     revalidatePath(`/dashboard/inventions/${invention.id}`);
-    return { message: "Mock analysis is ready for review." };
+    return { message: "Analysis is ready for review." };
   } catch (error) {
-    console.error("[mock-analysis] Provider or Supabase save failed", error);
+    console.error("[invention-analysis] Provider or Supabase save failed", error);
     const { error: failedStatusError } = await supabase.from("invention_cases").update({ ai_status: "FAILED" }).eq("id", invention.id).eq("user_id", userId);
-    if (failedStatusError) console.error("[mock-analysis] Failed to set FAILED status", failedStatusError);
+    if (failedStatusError) console.error("[invention-analysis] Failed to set FAILED status", failedStatusError);
     revalidatePath(`/dashboard/inventions/${invention.id}`);
-    return { error: developmentError(error) };
+    return { error: safeAnalysisError(error) };
   }
 }
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { ProgressPipeline } from "@/components/progress-pipeline";
 import { Badge, ButtonLink, Card, EmptyState, ErrorState } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 
@@ -41,10 +42,12 @@ export default async function DashboardPage() {
     </div>
 
     <section className="summary-grid" aria-label="Workspace summary">
-      <Card><span className="summary-icon violet">⌁</span><div><small>TOTAL INVENTIONS</small><strong>{inventions.length}</strong><p>Saved to your private workspace</p></div></Card>
+      <Card><span className="summary-icon sky">⌁</span><div><small>TOTAL INVENTIONS</small><strong>{inventions.length}</strong><p>Saved to your private workspace</p></div></Card>
       <Card><span className="summary-icon amber">↗</span><div><small>PUBLICLY DISCLOSED</small><strong>{disclosedCount}</strong><p>Marked as previously disclosed</p></div></Card>
       <Card><span className="summary-icon green">◇</span><div><small>BEYOND CONCEPT</small><strong>{prototypeCount}</strong><p>Prototype, testing, or production</p></div></Card>
     </section>
+
+    <ProgressPipeline />
 
     <section className="projects-section" id="projects">
       <div className="section-row"><div><h2>Your inventions</h2><p>Cases owned by your account</p></div></div>

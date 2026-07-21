@@ -81,27 +81,54 @@ export default async function InventionDetailPage({ params }: { params: Promise<
     }
   }
 
+  const status = invention.ai_status ?? "NOT_STARTED";
+  const approvedFeatures = Array.isArray(invention.approved_features)
+    ? invention.approved_features.filter((feature): feature is string => typeof feature === "string")
+    : [];
+  const progress = [
+    ["Details", true],
+    ["Images", images.length > 0],
+    ["Analysis", status === "NEEDS_REVIEW" || status === "APPROVED"],
+    ["Features", status === "APPROVED"],
+    ["Patent Search", false],
+    ["Report", false],
+    ["Draft", false],
+  ] as const;
+
   return <DashboardShell>
     <div className="invention-detail-heading">
       <Link href="/dashboard" aria-label="Back to dashboard">←</Link>
       <div><p className="eyebrow">PRIVATE INVENTION</p><h1>{invention.title}</h1><Badge tone={invention.development_stage === "concept" ? "neutral" : "success"}>{formatLabel(invention.development_stage)}</Badge></div>
     </div>
 
-    <div className="invention-detail-grid">
-      <Card className="invention-copy"><span>PROBLEM STATEMENT</span><p>{invention.problem_statement}</p></Card>
-      <Card className="invention-copy"><span>INVENTION DESCRIPTION</span><p>{invention.invention_description}</p></Card>
-      <Card className="prior-activity"><span>PREVIOUS ACTIVITY</span><dl><div><dt>Publicly disclosed</dt><dd>{invention.publicly_disclosed ? "Yes" : "No"}</dd></div><div><dt>Previously sold</dt><dd>{invention.previously_sold ? "Yes" : "No"}</dd></div><div><dt>Previously filed</dt><dd>{invention.previously_filed ? "Yes" : "No"}</dd></div></dl></Card>
+    <nav className="detail-progress" aria-label="Invention progress">
+      {progress.map(([label, complete], index) => <a className={complete ? "complete" : index === progress.findIndex((item) => !item[1]) ? "current" : ""} href={index < 4 ? `#step-${label.toLowerCase().replace(" ", "-")}` : undefined} aria-disabled={index >= 4} key={label}><span>{complete ? "✓" : index + 1}</span><small>{label}</small></a>)}
+    </nav>
+
+    <div className="detail-step-stack">
+      <details className="detail-step-card" id="step-details" open>
+        <summary><span>01</span><div><strong>Invention details</strong><small>Problem, description, and disclosure history</small></div><i aria-hidden="true">⌄</i></summary>
+        <div className="detail-step-content"><div className="invention-detail-grid">
+          <Card className="invention-copy"><span>PROBLEM STATEMENT</span><p>{invention.problem_statement}</p></Card>
+          <Card className="invention-copy"><span>INVENTION DESCRIPTION</span><p>{invention.invention_description}</p></Card>
+          <Card className="prior-activity"><span>PREVIOUS ACTIVITY</span><dl><div><dt>Publicly disclosed</dt><dd>{invention.publicly_disclosed ? "Yes" : "No"}</dd></div><div><dt>Previously sold</dt><dd>{invention.previously_sold ? "Yes" : "No"}</dd></div><div><dt>Previously filed</dt><dd>{invention.previously_filed ? "Yes" : "No"}</dd></div></dl></Card>
+        </div></div>
+      </details>
+
+      <details className="detail-step-card" id="step-images" open>
+        <summary><span>02</span><div><strong>Images</strong><small>{images.length ? `${images.length} uploaded image${images.length === 1 ? "" : "s"}` : "Add prototype photos or sketches"}</small></div><i aria-hidden="true">⌄</i></summary>
+        <div className="detail-step-content">{imagesError && <div className="image-action-error detail-image-error" role="alert">{imagesError}</div>}{!imageError && <InventionImages inventionId={invention.id} images={images} />}</div>
+      </details>
+
+      <details className="detail-step-card" id="step-analysis" open>
+        <summary><span>03</span><div><strong>AI analysis</strong><small>Extract, review, and refine the invention structure</small></div><i aria-hidden="true">⌄</i></summary>
+        <div className="detail-step-content"><InventionAnalysis inventionId={invention.id} status={status} aiAnalysis={invention.ai_analysis} clarificationQuestions={invention.clarification_questions} approvedFeatures={invention.approved_features} /></div>
+      </details>
+
+      <details className="detail-step-card" id="step-features" open>
+        <summary><span>04</span><div><strong>Approved features</strong><small>The reviewed feature set used by later stages</small></div><i aria-hidden="true">⌄</i></summary>
+        <div className="detail-step-content">{approvedFeatures.length ? <ul className="approved-feature-list">{approvedFeatures.map((feature, index) => <li key={`${feature}-${index}`}><span>✓</span>{feature}</li>)}</ul> : <div className="feature-empty"><span>◇</span><div><strong>No approved features yet</strong><p>Complete AI analysis and approve the extracted feature set.</p></div></div>}</div>
+      </details>
     </div>
-
-    <InventionAnalysis
-      inventionId={invention.id}
-      status={invention.ai_status ?? "NOT_STARTED"}
-      aiAnalysis={invention.ai_analysis}
-      clarificationQuestions={invention.clarification_questions}
-      approvedFeatures={invention.approved_features}
-    />
-
-    {imagesError && <div className="image-action-error detail-image-error" role="alert">{imagesError}</div>}
-    {!imageError && <InventionImages inventionId={invention.id} images={images} />}
   </DashboardShell>;
 }

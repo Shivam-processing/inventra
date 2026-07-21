@@ -1,12 +1,6 @@
 import "server-only";
 
-import type { MockAnalysisResult } from "@/lib/ai/types";
-
-type InventionInput = {
-  title: string;
-  problemStatement: string;
-  description: string;
-};
+import type { InventionAnalysisInput, InventionAnalysisResult } from "@/lib/ai/types";
 
 function inferTechnicalField(text: string) {
   const value = text.toLowerCase();
@@ -18,7 +12,7 @@ function inferTechnicalField(text: string) {
 }
 
 export class MockAIProvider {
-  async analyse(input: InventionInput): Promise<MockAnalysisResult> {
+  async analyse(input: InventionAnalysisInput): Promise<InventionAnalysisResult> {
     const description = input.description.trim();
     const firstSentence = description.split(/(?<=[.!?])\s+/)[0] || description;
     const field = inferTechnicalField(`${input.title} ${description}`);

@@ -40,7 +40,7 @@ function normalizeAnalysis(value: unknown): InventionAnalysis | null {
 
 function ActionMessage({ state }: { state: AnalysisActionState }) {
   if (state.error) return <div className="analysis-message analysis-error" role="alert"><span>!</span>{state.error}</div>;
-  if (state.message) return <div className="analysis-message analysis-success" role="status"><span>✓</span>{state.message}</div>;
+  if (state.message) return <div className="analysis-message analysis-success" role="status"><span className="success-check">✓</span>{state.message}</div>;
   return null;
 }
 
@@ -93,6 +93,6 @@ export function InventionAnalysis({ inventionId, status, aiAnalysis, clarificati
   const features = list(approvedFeatures);
 
   return <section className="analysis-section">
-    {status === "PROCESSING" ? <div className="analysis-processing" role="status"><span className="spinner" aria-hidden="true" /><div><strong>Analysing your invention</strong><p>The mock provider is structuring the description and preparing review questions…</p></div></div> : analysis && (status === "NEEDS_REVIEW" || status === "APPROVED") ? <AnalysisReview inventionId={inventionId} analysis={analysis} questions={questions} approvedFeatures={features} status={status} /> : <AnalyseButton inventionId={inventionId} status={status} />}
+    {status === "PROCESSING" ? <div className="analysis-processing" role="status"><span className="spinner" aria-hidden="true" /><div><strong>Analysing your invention</strong><p>The provider is structuring the description and preparing review questions…</p><i aria-hidden="true" /><i aria-hidden="true" /><i aria-hidden="true" /></div></div> : analysis && (status === "NEEDS_REVIEW" || status === "APPROVED") ? <AnalysisReview inventionId={inventionId} analysis={analysis} questions={questions} approvedFeatures={features} status={status} /> : <AnalyseButton inventionId={inventionId} status={status} />}
   </section>;
 }

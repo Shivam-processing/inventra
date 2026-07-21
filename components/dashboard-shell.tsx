@@ -17,7 +17,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         <p>WORKSPACE</p>
         {nav.map(([icon, label], index) => <a className={index === 0 ? "active" : ""} href="#" key={label} onClick={() => setOpen(false)}><span>{icon}</span>{label}{label === "Inventions" && <small>3</small>}</a>)}
       </nav>
-      <div className="sidebar-bottom"><a href="#"><span>?</span>Help & resources</a><a href="#"><span>⚙</span>Settings</a><div className="user-chip"><span>AM</span><p><strong>Alex Morgan</strong><small>Signed in</small></p><form action={logout}><button type="submit" aria-label="Log out">Log out</button></form></div></div>
+      <div className="sidebar-bottom"><a href="#"><span>?</span>Help & resources</a><a href="#"><span>⚙</span>Settings</a><div className="user-chip"><p><strong>Alex Morgan</strong><small>Signed in</small></p><form action={logout}><button type="submit" aria-label="Log out">Log out</button></form></div></div>
     </aside>
     {open && <button className="sidebar-scrim" aria-label="Close sidebar" onClick={() => setOpen(false)} />}
     <div className="dashboard-main">

@@ -12,7 +12,16 @@ export type InventionAnalysis = {
   keyFeatures: string[];
 };
 
-export type MockAnalysisResult = {
+export type InventionAnalysisInput = {
+  title: string;
+  problemStatement: string;
+  description: string;
+  imageUrls?: string[];
+};
+
+export type InventionAnalysisResult = {
   analysis: InventionAnalysis;
   clarificationQuestions: string[];
 };
+
+export type MockAnalysisResult = InventionAnalysisResult;
