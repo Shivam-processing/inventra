@@ -40,7 +40,7 @@ export async function searchSimilarPatents(
 
   const { data: invention, error: inventionError } = await supabase
     .from("invention_cases")
-    .select("id,title,ai_status,ai_analysis,approved_features")
+    .select("id,title,ai_status,ai_analysis,approved_features,feature_set_version")
     .eq("id", parsedId.data)
     .eq("user_id", userId)
     .maybeSingle();
@@ -62,12 +62,25 @@ export async function searchSimilarPatents(
     return { error: "The approved features need more specific technical terms." };
   }
 
+  const { data: activeSearch, error: activeSearchError } = await supabase
+    .from("patent_searches")
+    .select("id")
+    .eq("invention_id", invention.id)
+    .eq("user_id", userId)
+    .eq("feature_set_version", invention.feature_set_version)
+    .eq("status", "PROCESSING")
+    .limit(1)
+    .maybeSingle();
+  if (activeSearchError) return { error: "The patent search status could not be checked. Please try again." };
+  if (activeSearch) return { error: "A patent search is already in progress for this feature set." };
+
   const { data: searchRecord, error: createError } = await supabase
     .from("patent_searches")
     .insert({
       invention_id: invention.id,
       user_id: userId,
       search_terms: searchTerms,
+      feature_set_version: invention.feature_set_version,
       status: "PROCESSING",
       results: [],
       error_message: null,
@@ -77,7 +90,7 @@ export async function searchSimilarPatents(
 
   if (createError || !searchRecord) {
     console.error("[epo-patent-search] Could not create search record", createError?.code);
-    return { error: "The patent search could not be started. Please try again." };
+    return { error: createError?.code === "23505" ? "A patent search is already in progress for this feature set." : "The patent search could not be started. Please try again." };
   }
 
   try {

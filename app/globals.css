@@ -329,9 +329,744 @@ body { background: #050b18; color: #f8fafc; overflow-x: clip; }
 
 .route-state { border-color: rgba(56,189,248,.2); background: linear-gradient(145deg, rgba(13,27,46,.96), rgba(8,20,38,.96)); color: #f8fafc; box-shadow: 0 25px 70px rgba(0,0,0,.34), 0 0 32px rgba(34,211,238,.045); }.route-state p { color: #94a3b8; }
 .patent-search-section { display: grid; gap: 22px; }.patent-search-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 24px; }.patent-search-toolbar > div { display: flex; align-items: center; gap: 15px; }.patent-search-icon { width: 43px; height: 43px; display: grid; place-items: center; flex: none; border: 1px solid rgba(34,211,238,.24); border-radius: 12px; background: linear-gradient(135deg, #0b3d36, rgba(34,211,238,.2)); color: #67e8f9; font-size: 20px; box-shadow: 0 0 24px rgba(34,211,238,.08); }.patent-search-toolbar h2 { margin: 0; color: #f8fafc; font-family: Georgia, serif; font-size: 23px; font-weight: 500; }.patent-search-toolbar p { max-width: 590px; margin: 6px 0 0; color: #94a3b8; font-size: 11px; line-height: 1.55; }.patent-search-toolbar button { min-height: 44px; padding: 0 18px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(56,189,248,.34); border-radius: 8px; background: linear-gradient(115deg, #0b3d36, #10b981 48%, #38bdf8); color: #f8fafc; cursor: pointer; font-size: 11px; font-weight: 700; box-shadow: 0 0 24px rgba(16,185,129,.12); }.patent-search-toolbar button:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }.patent-search-notice, .patent-search-loading, .patent-search-empty { padding: 18px; display: flex; align-items: center; gap: 13px; border: 1px dashed rgba(56,189,248,.23); border-radius: 11px; background: rgba(5,11,24,.36); color: #94a3b8; }.patent-search-notice > span, .patent-search-empty > span { width: 32px; height: 32px; display: grid; place-items: center; flex: none; border-radius: 50%; background: rgba(34,211,238,.08); color: #22d3ee; }.patent-search-notice p, .patent-search-empty p, .patent-search-loading p { margin: 3px 0 0; font-size: 10px; line-height: 1.5; }.patent-search-notice strong, .patent-search-empty strong, .patent-search-loading strong { display: block; color: #f8fafc; font-size: 11px; }.patent-search-loading > span { width: 30px; height: 30px; flex: none; }.patent-search-message { padding: 11px 13px; border: 1px solid; border-radius: 8px; font-size: 10px; line-height: 1.5; }.patent-search-error { border-color: rgba(248,113,113,.2); background: rgba(127,29,29,.24); color: #fecaca; }.patent-search-success { border-color: rgba(16,185,129,.22); background: rgba(6,78,59,.28); color: #a7f3d0; }.patent-search-terms { display: grid; gap: 9px; }.patent-search-terms > span { color: #22d3ee; font-size: 8px; font-weight: 750; letter-spacing: .13em; }.patent-search-terms > div { display: flex; flex-wrap: wrap; gap: 7px; }.patent-search-terms code { padding: 6px 9px; border: 1px solid rgba(56,189,248,.17); border-radius: 99px; background: rgba(34,211,238,.055); color: #bae6fd; font-family: inherit; font-size: 9px; }.patent-result-list { margin: 0; padding: 0; display: grid; gap: 12px; list-style: none; }.patent-result-list > li { min-width: 0; padding: 20px; display: grid; grid-template-columns: 130px minmax(0,1fr); gap: 20px; border: 1px solid rgba(56,189,248,.16); border-radius: 12px; background: rgba(5,11,24,.4); transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease; }.patent-result-list > li:hover { border-color: rgba(34,211,238,.38); box-shadow: 0 0 26px rgba(34,211,238,.05); transform: translateY(-2px); }.patent-result-number { display: grid; align-content: start; gap: 9px; }.patent-result-number span { color: #22d3ee; font-family: Georgia, serif; font-size: 24px; }.patent-result-number strong { overflow-wrap: anywhere; color: #94a3b8; font-size: 9px; letter-spacing: .05em; }.patent-result-copy h3 { margin: 0; color: #f8fafc; font-family: Georgia, serif; font-size: 18px; font-weight: 500; line-height: 1.35; }.patent-result-copy dl { margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 8px 24px; }.patent-result-copy dl div { display: flex; gap: 6px; font-size: 9px; }.patent-result-copy dt { color: #718198; }.patent-result-copy dd { margin: 0; color: #b8c7d8; }.patent-result-copy > p { margin: 14px 0 0; display: -webkit-box; overflow: hidden; color: #94a3b8; font-size: 10px; line-height: 1.65; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }.patent-result-copy > a { width: fit-content; margin-top: 14px; display: flex; align-items: center; gap: 5px; color: #38bdf8; font-size: 10px; font-weight: 650; }.patent-result-copy > a small { margin-left: 5px; color: #61748a; font-size: 8px; font-weight: 500; }.patent-result-copy > a:hover { color: #67e8f9; }
+.overlap-report-section { display: grid; gap: 22px; }.overlap-report-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 24px; }.overlap-report-toolbar > div { display: flex; align-items: center; gap: 15px; }.overlap-report-icon { width: 43px; height: 43px; display: grid; place-items: center; flex: none; border: 1px solid rgba(16,185,129,.28); border-radius: 12px; background: linear-gradient(135deg, #0b3d36, rgba(34,211,238,.16)); color: #6ee7b7; font-size: 20px; box-shadow: 0 0 24px rgba(16,185,129,.08); }.overlap-report-toolbar h2 { margin: 0; color: #f8fafc; font-family: Georgia, serif; font-size: 23px; font-weight: 500; }.overlap-report-toolbar p { margin: 6px 0 0; color: #94a3b8; font-size: 11px; }.overlap-report-toolbar button { min-height: 44px; padding: 0 18px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(56,189,248,.34); border-radius: 8px; background: linear-gradient(115deg, #0b3d36, #10b981 48%, #38bdf8); color: #f8fafc; cursor: pointer; font-size: 11px; font-weight: 700; box-shadow: 0 0 24px rgba(16,185,129,.12); }.overlap-report-toolbar button:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }.overlap-disclaimer { padding: 11px 13px; display: flex; align-items: center; gap: 9px; border: 1px solid rgba(56,189,248,.19); border-radius: 9px; background: rgba(56,189,248,.055); color: #bae6fd; font-size: 10px; }.overlap-disclaimer span { width: 22px; height: 22px; display: grid; place-items: center; flex: none; border: 1px solid rgba(56,189,248,.24); border-radius: 50%; color: #22d3ee; font-weight: 800; }.overlap-summary { padding: 20px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border: 1px solid rgba(56,189,248,.17); border-radius: 12px; background: rgba(5,11,24,.42); }.overlap-summary > div { display: grid; gap: 6px; }.overlap-summary > div span { color: #718198; font-size: 8px; font-weight: 750; letter-spacing: .13em; }.overlap-summary > div strong { color: #f8fafc; font-family: Georgia, serif; font-size: 22px; font-weight: 500; }.overlap-summary dl { margin: 0; display: grid; grid-template-columns: repeat(4, minmax(60px,1fr)); gap: 8px; }.overlap-summary dl div { padding: 9px 12px; display: grid; gap: 3px; border: 1px solid rgba(56,189,248,.12); border-radius: 8px; background: rgba(13,27,46,.62); }.overlap-summary dt { color: #718198; font-size: 8px; }.overlap-summary dd { margin: 0; color: #f8fafc; font-size: 15px; font-weight: 700; }.summary-high_conflict { border-color: rgba(248,113,113,.25); box-shadow: inset 3px 0 #f87171; }.summary-partial_overlap { border-color: rgba(56,189,248,.25); box-shadow: inset 3px 0 #38bdf8; }.summary-low_overlap { border-color: rgba(16,185,129,.24); box-shadow: inset 3px 0 #10b981; }.summary-insufficient_information { box-shadow: inset 3px 0 #94a3b8; }.overlap-table-wrap { overflow-x: auto; border: 1px solid rgba(56,189,248,.16); border-radius: 12px; }.overlap-table { width: 100%; border-collapse: collapse; table-layout: fixed; }.overlap-table th { padding: 11px 12px; border-bottom: 1px solid rgba(56,189,248,.14); background: rgba(5,11,24,.45); color: #718198; font-size: 8px; font-weight: 750; letter-spacing: .08em; text-align: left; text-transform: uppercase; }.overlap-table th:nth-child(1) { width: 23%; }.overlap-table th:nth-child(2) { width: 19%; }.overlap-table th:nth-child(3) { width: 10%; }.overlap-table th:nth-child(4) { width: 18%; }.overlap-table td { padding: 14px 12px; border-bottom: 1px solid rgba(56,189,248,.1); color: #aebdcd; font-size: 9px; line-height: 1.55; vertical-align: top; overflow-wrap: anywhere; }.overlap-table tr:last-child td { border-bottom: 0; }.overlap-table td > strong { display: block; color: #f8fafc; font-size: 10px; }.overlap-table td > small { display: block; margin-top: 4px; color: #718198; font-size: 8px; }.overlap-match { padding: 5px 7px; display: inline-flex; border: 1px solid currentColor; border-radius: 99px; font-size: 7px; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; }.overlap-full { background: rgba(248,113,113,.1); color: #fca5a5; }.overlap-partial { background: rgba(56,189,248,.09); color: #7dd3fc; }.overlap-not_found { background: rgba(16,185,129,.09); color: #6ee7b7; }.overlap-uncertain { background: rgba(148,163,184,.09); color: #cbd5e1; }.overlap-keywords { display: flex; flex-wrap: wrap; gap: 4px; }.overlap-keywords code { padding: 3px 5px; border-radius: 5px; background: rgba(34,211,238,.07); color: #bae6fd; font-family: inherit; font-size: 8px; }.overlap-keywords > span { color: #61748a; }
+.patent-draft-section { display: grid; gap: 22px; }.patent-draft-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 24px; }.patent-draft-toolbar > div:first-child { display: flex; align-items: center; gap: 15px; }.patent-draft-icon { width: 43px; height: 43px; display: grid; place-items: center; flex: none; border: 1px solid rgba(34,211,238,.24); border-radius: 12px; background: linear-gradient(135deg, #0b3d36, rgba(56,189,248,.19)); color: #67e8f9; font-size: 18px; box-shadow: 0 0 24px rgba(34,211,238,.08); }.patent-draft-toolbar h2 { margin: 0; color: #f8fafc; font-family: Georgia, serif; font-size: 23px; font-weight: 500; }.patent-draft-toolbar p { margin: 6px 0 0; color: #94a3b8; font-size: 11px; }.draft-meta { display: flex; align-items: center; gap: 9px; }.draft-meta small { color: #718198; font-size: 9px; }.draft-status { padding: 5px 8px; border: 1px solid currentColor; border-radius: 99px; font-size: 8px; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; }.draft-status-completed { background: rgba(16,185,129,.1); color: #6ee7b7; }.draft-status-processing { background: rgba(56,189,248,.09); color: #7dd3fc; }.draft-status-failed { background: rgba(248,113,113,.1); color: #fca5a5; }.draft-generation-form { padding: 16px; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 14px; border: 1px solid rgba(56,189,248,.17); border-radius: 11px; background: rgba(5,11,24,.4); }.draft-acknowledgement { min-width: 0; display: grid; grid-template-columns: 18px minmax(0,1fr); align-items: center; gap: 10px; cursor: pointer; }.draft-acknowledgement input { position: absolute; opacity: 0; }.draft-acknowledgement > span { width: 18px; height: 18px; display: grid; place-items: center; border: 1px solid rgba(56,189,248,.35); border-radius: 5px; background: #081426; color: transparent; font-size: 10px; }.draft-acknowledgement input:checked + span { border-color: #10b981; background: #0b3d36; color: #6ee7b7; box-shadow: 0 0 13px rgba(16,185,129,.13); }.draft-acknowledgement input:focus-visible + span { outline: 2px solid #38bdf8; outline-offset: 2px; }.draft-acknowledgement strong { color: #c5d3df; font-size: 10px; line-height: 1.55; }.draft-generation-form > button, .draft-save-bar > button { min-height: 42px; padding: 0 17px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(56,189,248,.34); border-radius: 8px; background: linear-gradient(115deg, #0b3d36, #10b981 48%, #38bdf8); color: #f8fafc; cursor: pointer; font-size: 10px; font-weight: 700; }.draft-generation-form > button:disabled, .draft-save-bar > button:disabled { opacity: .5; cursor: not-allowed; }.draft-editor-layout { display: grid; grid-template-columns: 190px minmax(0,1fr); align-items: start; gap: 18px; }.draft-section-nav { padding: 14px; position: sticky; top: 82px; display: grid; gap: 3px; border: 1px solid rgba(56,189,248,.16); border-radius: 11px; background: rgba(5,11,24,.58); }.draft-section-nav > span { margin: 3px 7px 8px; color: #4f8191; font-size: 7px; font-weight: 750; letter-spacing: .12em; }.draft-section-nav a { padding: 8px 7px; display: flex; align-items: center; gap: 8px; border-radius: 7px; color: #94a3b8; font-size: 9px; }.draft-section-nav a:hover { background: rgba(34,211,238,.06); color: #f8fafc; }.draft-section-nav small { color: #22d3ee; font-size: 7px; }.draft-editor-form { min-width: 0; display: grid; gap: 14px; }.draft-save-bar { padding: 13px 14px; position: sticky; z-index: 2; top: 82px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid rgba(56,189,248,.18); border-radius: 10px; background: rgba(8,20,38,.92); box-shadow: 0 12px 32px rgba(0,0,0,.22); backdrop-filter: blur(15px); }.draft-save-bar > div { display: grid; gap: 4px; }.draft-save-bar small { color: #718198; font-size: 8px; }.draft-unsaved { display: flex; align-items: center; gap: 6px; color: #6ee7b7; font-size: 9px; font-weight: 700; }.draft-unsaved i { width: 6px; height: 6px; border-radius: 50%; background: #10b981; }.draft-unsaved.active { color: #7dd3fc; }.draft-unsaved.active i { background: #38bdf8; box-shadow: 0 0 8px #38bdf8; }.draft-section-cards { display: grid; gap: 13px; }.draft-section-card { padding: 17px; scroll-margin-top: 150px; border: 1px solid rgba(56,189,248,.15); border-radius: 11px; background: rgba(5,11,24,.4); }.draft-section-card header { margin-bottom: 11px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }.draft-section-card header > div { display: flex; align-items: center; gap: 9px; }.draft-section-card header span { color: #22d3ee; font-size: 8px; font-weight: 750; }.draft-section-card h3 { margin: 0; color: #f8fafc; font-family: Georgia, serif; font-size: 16px; font-weight: 500; }.draft-section-card header button { padding: 5px 0; border: 0; background: transparent; color: #38bdf8; cursor: pointer; font-size: 8px; font-weight: 650; }.draft-section-card header button:disabled { color: #52667d; cursor: not-allowed; }.draft-section-card textarea { width: 100%; padding: 12px; border: 1px solid rgba(56,189,248,.17); border-radius: 8px; background: rgba(8,20,38,.76); color: #dce7f2; font: inherit; font-size: 10px; line-height: 1.65; resize: vertical; }.draft-section-card textarea:focus { border-color: #38bdf8; outline: 0; box-shadow: 0 0 0 3px rgba(56,189,248,.1), 0 0 20px rgba(34,211,238,.05); }
+.feature-editor { padding: 20px; display: grid; gap: 16px; border: 1px solid rgba(16,185,129,.2); border-radius: 12px; background: rgba(11,61,54,.14); }.feature-editor > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }.feature-editor h3 { margin: 6px 0 0; color: #f8fafc; font-family: Georgia, serif; font-size: 21px; font-weight: 500; }.feature-editor header p { margin: 5px 0 0; color: #94a3b8; font-size: 9px; line-height: 1.5; }.feature-reapproval-note, .feature-version-summary, .downstream-version-note { padding: 11px 13px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(56,189,248,.2); border-radius: 9px; background: rgba(56,189,248,.055); color: #a9bad0; }.feature-reapproval-note > span, .feature-version-summary > span, .downstream-version-note > span { width: 24px; height: 24px; display: grid; place-items: center; flex: none; border-radius: 50%; background: rgba(34,211,238,.09); color: #22d3ee; font-size: 10px; font-weight: 800; }.feature-reapproval-note p, .feature-version-summary p, .downstream-version-note p { margin: 0; font-size: 9px; line-height: 1.5; }.feature-reapproval-note strong, .feature-version-summary strong, .downstream-version-note strong { display: block; color: #f8fafc; font-size: 10px; }.feature-version-summary { margin-bottom: 13px; border-color: rgba(16,185,129,.2); background: rgba(16,185,129,.055); }.feature-version-summary > span { background: rgba(16,185,129,.1); color: #6ee7b7; }.feature-version-summary.stale { border-color: rgba(56,189,248,.2); background: rgba(56,189,248,.055); }.feature-version-summary.stale > span { background: rgba(34,211,238,.09); color: #22d3ee; }.downstream-version-note { border-style: dashed; }.feature-editor-list { margin: 0; padding: 0; display: grid; gap: 9px; list-style: none; }.feature-editor-list li { min-width: 0; padding: 9px; display: grid; grid-template-columns: 28px minmax(0,1fr) auto; align-items: start; gap: 9px; border: 1px solid rgba(56,189,248,.15); border-radius: 9px; background: rgba(5,11,24,.42); }.feature-editor-list li > span { padding-top: 10px; color: #22d3ee; font-size: 8px; font-weight: 750; text-align: center; }.feature-editor-list textarea { width: 100%; min-height: 64px; padding: 9px 10px; border: 1px solid rgba(56,189,248,.16); border-radius: 7px; background: rgba(8,20,38,.8); color: #e2e8f0; font: inherit; font-size: 10px; line-height: 1.55; resize: vertical; }.feature-editor-list textarea:focus { border-color: #38bdf8; outline: 0; box-shadow: 0 0 0 3px rgba(56,189,248,.1); }.feature-editor-list li > div { display: flex; gap: 4px; }.feature-editor-list button, .feature-editor-controls button, .feature-cancel, .feature-save { min-height: 30px; padding: 0 8px; border: 1px solid rgba(56,189,248,.17); border-radius: 6px; background: rgba(13,27,46,.82); color: #94a3b8; cursor: pointer; font-size: 8px; font-weight: 650; }.feature-editor-list button:last-child { color: #fca5a5; }.feature-editor button:disabled { opacity: .42; cursor: not-allowed; }.feature-editor-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; }.feature-editor-controls small { color: #718198; font-size: 8px; }.feature-editor > .analysis-message { grid-column: auto; }.feature-editor footer { padding-top: 13px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid rgba(56,189,248,.12); }.feature-editor footer > div { display: flex; gap: 8px; }.feature-editor .feature-approve { min-height: 38px; padding: 0 14px; border: 1px solid rgba(56,189,248,.34); border-radius: 7px; background: linear-gradient(115deg, #0b3d36, #10b981 48%, #38bdf8); color: #f8fafc; cursor: pointer; font-size: 9px; font-weight: 700; }.feature-editor .feature-save { min-height: 38px; padding-inline: 12px; color: #7dd3fc; }
 @media (max-width: 780px) {
-  .dashboard-topbar { background: rgba(5,11,24,.92); }.sidebar-scrim { background: rgba(2,6,18,.72); backdrop-filter: blur(3px); }.auth-card { background: linear-gradient(145deg, rgba(13,27,46,.99), rgba(8,20,38,.99)); }.patent-search-toolbar { align-items: stretch; flex-direction: column; }.patent-search-toolbar form, .patent-search-toolbar button { width: 100%; }.patent-result-list > li { grid-template-columns: 1fr; gap: 12px; }.patent-result-number { display: flex; align-items: center; justify-content: space-between; }.patent-result-number span { font-size: 19px; }.patent-result-copy > a { align-items: flex-start; flex-wrap: wrap; }
+  .dashboard-topbar { background: rgba(5,11,24,.92); }.sidebar-scrim { background: rgba(2,6,18,.72); backdrop-filter: blur(3px); }.auth-card { background: linear-gradient(145deg, rgba(13,27,46,.99), rgba(8,20,38,.99)); }.patent-search-toolbar, .overlap-report-toolbar, .patent-draft-toolbar { align-items: stretch; flex-direction: column; }.patent-search-toolbar form, .patent-search-toolbar button, .overlap-report-toolbar form, .overlap-report-toolbar button { width: 100%; }.patent-result-list > li { grid-template-columns: 1fr; gap: 12px; }.patent-result-number { display: flex; align-items: center; justify-content: space-between; }.patent-result-number span { font-size: 19px; }.patent-result-copy > a { align-items: flex-start; flex-wrap: wrap; }.overlap-summary { align-items: stretch; flex-direction: column; }.overlap-summary dl { grid-template-columns: repeat(2,1fr); }.overlap-table-wrap { border: 0; overflow: visible; }.overlap-table, .overlap-table tbody { display: block; }.overlap-table thead { display: none; }.overlap-table tr { padding: 15px; display: grid; gap: 12px; border: 1px solid rgba(56,189,248,.16); border-radius: 11px; background: rgba(5,11,24,.4); }.overlap-table tr + tr { margin-top: 10px; }.overlap-table td { padding: 0; display: grid; grid-template-columns: 105px minmax(0,1fr); gap: 10px; border: 0; }.overlap-table td::before { content: attr(data-label); color: #718198; font-size: 8px; font-weight: 700; text-transform: uppercase; }.draft-generation-form { grid-template-columns: 1fr; }.draft-generation-form > button { width: 100%; }.draft-editor-layout { grid-template-columns: 1fr; }.draft-section-nav { position: static; grid-template-columns: repeat(2,minmax(0,1fr)); }.draft-section-nav > span { grid-column: 1 / -1; }.draft-save-bar { top: 72px; align-items: stretch; flex-direction: column; }.draft-save-bar > button { width: 100%; }
+}
+@media (max-width: 620px) {
+  .feature-editor > header, .feature-editor footer { align-items: stretch; flex-direction: column; }.feature-editor footer > div { display: grid; grid-template-columns: 1fr; }.feature-editor footer button { width: 100%; }.feature-editor-list li { grid-template-columns: 24px minmax(0,1fr); }.feature-editor-list li > div { grid-column: 2; flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
   .summary-grid .card:hover, .project-card:hover, .image-card:hover, .form-section:hover, .button:hover, .upload-button:hover, .patent-result-list > li:hover { transform: none !important; }
+}
+
+/* Invention workspace readability */
+.invention-detail-page { width: 100%; max-width: 1440px; margin-inline: auto; }
+.invention-detail-page .invention-detail-heading h1 { max-width: 26ch; font-size: clamp(32px, 3vw, 38px); line-height: 1.18; }
+.invention-detail-page .invention-detail-heading .eyebrow,
+.invention-detail-page .badge,
+.invention-detail-page .detail-progress small { font-size: 13px; }
+.invention-detail-page .detail-step-stack { gap: 28px; }
+.invention-detail-page .detail-step-card > summary { min-height: 96px; padding: 24px 28px; grid-template-columns: 40px minmax(0, 1fr) 24px; gap: 16px; }
+.invention-detail-page .detail-step-card > summary > span { width: 40px; height: 40px; font-size: 13px; }
+.invention-detail-page .detail-step-card > summary strong { font-size: clamp(22px, 2vw, 27px); line-height: 1.25; }
+.invention-detail-page .detail-step-card > summary small { margin-top: 4px; font-size: 14px; line-height: 1.55; }
+.invention-detail-page .detail-step-content { padding: clamp(24px, 3vw, 38px); }
+.invention-detail-page .invention-detail-grid { gap: 20px; }
+.invention-detail-page .invention-copy,
+.invention-detail-page .prior-activity { padding: 28px; }
+.invention-detail-page .invention-copy > span,
+.invention-detail-page .prior-activity > span { font-size: 13px; }
+.invention-detail-page .invention-copy p { max-width: 72ch; margin-top: 20px; font-size: 16px; line-height: 1.75; }
+.invention-detail-page .prior-activity dl { margin-top: 20px; gap: 12px; }
+.invention-detail-page .prior-activity dl div { padding: 13px 0; gap: 18px; }
+.invention-detail-page .prior-activity dt,
+.invention-detail-page .prior-activity dd { font-size: 14px; line-height: 1.55; }
+
+.invention-detail-page .analysis-start,
+.invention-detail-page .analysis-review,
+.invention-detail-page .feature-editor { padding: clamp(24px, 3vw, 34px); }
+.invention-detail-page .analysis-start h2,
+.invention-detail-page .analysis-review-header h2,
+.invention-detail-page .feature-editor h3,
+.invention-detail-page .image-upload-card h2,
+.invention-detail-page .image-gallery-heading h2 { font-size: clamp(22px, 2vw, 27px); line-height: 1.3; }
+.invention-detail-page .analysis-start p,
+.invention-detail-page .analysis-review-header p,
+.invention-detail-page .feature-editor header p,
+.invention-detail-page .image-upload-card p,
+.invention-detail-page .image-gallery-heading p { max-width: 72ch; font-size: 16px; line-height: 1.7; }
+.invention-detail-page .analysis-review { gap: 28px; }
+.invention-detail-page .analysis-list-grid,
+.invention-detail-page .analysis-two-column { gap: 20px; }
+.invention-detail-page .analysis-field { gap: 10px; font-size: 14px; line-height: 1.5; }
+.invention-detail-page .analysis-field textarea,
+.invention-detail-page .feature-editor-list textarea { padding: 15px 16px; color: #eef6ff; font-size: 16px; line-height: 1.7; }
+.invention-detail-page .analysis-field textarea::placeholder,
+.invention-detail-page .feature-editor-list textarea::placeholder,
+.invention-detail-page .draft-section-card textarea::placeholder { color: #7f91a6; opacity: 1; }
+.invention-detail-page .analysis-field small,
+.invention-detail-page .analysis-status,
+.invention-detail-page .feature-editor-controls small { font-size: 13px; line-height: 1.5; }
+.invention-detail-page .analysis-start form button,
+.invention-detail-page .analysis-actions button { min-height: 48px; font-size: 14px; }
+.invention-detail-page .analysis-message { padding: 14px 16px; font-size: 15px; line-height: 1.65; }
+.invention-detail-page .analysis-processing { padding: 28px; }
+.invention-detail-page .analysis-processing strong { font-size: 22px; line-height: 1.35; }
+.invention-detail-page .analysis-processing p { max-width: 70ch; font-size: 16px; line-height: 1.7; }
+.invention-detail-page .approved-feature-list { gap: 14px; }
+.invention-detail-page .approved-feature-list li { padding: 18px; font-size: 16px; line-height: 1.7; }
+.invention-detail-page .feature-editor { gap: 22px; }
+.invention-detail-page .feature-editor-list { gap: 14px; }
+.invention-detail-page .feature-editor-list li { padding: 13px; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 12px; }
+.invention-detail-page .feature-editor-list li > span,
+.invention-detail-page .feature-editor-list button,
+.invention-detail-page .feature-editor-controls button,
+.invention-detail-page .feature-cancel,
+.invention-detail-page .feature-save,
+.invention-detail-page .feature-editor .feature-approve { font-size: 13px; }
+.invention-detail-page .feature-editor-list button,
+.invention-detail-page .feature-editor-controls button,
+.invention-detail-page .feature-cancel,
+.invention-detail-page .feature-save { min-height: 38px; }
+.invention-detail-page .feature-reapproval-note,
+.invention-detail-page .feature-version-summary,
+.invention-detail-page .downstream-version-note { padding: 16px; }
+.invention-detail-page .feature-reapproval-note p,
+.invention-detail-page .feature-version-summary p,
+.invention-detail-page .downstream-version-note p { font-size: 15px; line-height: 1.65; }
+.invention-detail-page .feature-reapproval-note strong,
+.invention-detail-page .feature-version-summary strong,
+.invention-detail-page .downstream-version-note strong { font-size: 16px; }
+
+.invention-detail-page .image-upload-card { padding: clamp(24px, 3vw, 34px); gap: 28px; }
+.invention-detail-page .gallery-heading h2 { font-size: clamp(22px, 2vw, 27px); line-height: 1.3; }
+.invention-detail-page .gallery-heading p { font-size: 15px; line-height: 1.6; }
+.invention-detail-page .file-drop { padding: 24px; }
+.invention-detail-page .file-drop strong,
+.invention-detail-page .selected-images strong,
+.invention-detail-page .image-card-details strong { font-size: 15px; line-height: 1.45; }
+.invention-detail-page .file-drop small,
+.invention-detail-page .selected-images small,
+.invention-detail-page .image-card-details > span,
+.invention-detail-page .image-card-details small,
+.invention-detail-page .image-type-field,
+.invention-detail-page .delete-image-form button { font-size: 13px; line-height: 1.5; }
+.invention-detail-page .image-type-field select { min-height: 48px; font-size: 16px; }
+.invention-detail-page .upload-button { min-height: 48px; font-size: 14px; }
+.invention-detail-page .selected-images p { font-size: 15px; line-height: 1.6; }
+.invention-detail-page .selected-images li { padding: 12px; gap: 12px; }
+.invention-detail-page .selected-images li button { min-height: 36px; font-size: 13px; }
+.invention-detail-page .delete-image-form span { font-size: 13px; line-height: 1.5; }
+.invention-detail-page .image-empty p,
+.invention-detail-page .image-action-error,
+.invention-detail-page .image-action-success { font-size: 15px; line-height: 1.65; }
+.invention-detail-page .image-empty strong { font-size: 18px; line-height: 1.45; }
+
+.invention-detail-page .patent-search-section,
+.invention-detail-page .overlap-report-section,
+.invention-detail-page .patent-draft-section { gap: 28px; }
+.invention-detail-page .patent-search-toolbar h2,
+.invention-detail-page .overlap-report-toolbar h2,
+.invention-detail-page .patent-draft-toolbar h2 { font-size: clamp(22px, 2vw, 27px); line-height: 1.3; }
+.invention-detail-page .patent-search-toolbar p,
+.invention-detail-page .overlap-report-toolbar p,
+.invention-detail-page .patent-draft-toolbar p { max-width: 72ch; font-size: 16px; line-height: 1.7; }
+.invention-detail-page .patent-search-toolbar button,
+.invention-detail-page .overlap-report-toolbar button,
+.invention-detail-page .draft-generation-form > button,
+.invention-detail-page .draft-save-bar > button { min-height: 48px; font-size: 14px; }
+.invention-detail-page .patent-search-notice,
+.invention-detail-page .patent-search-loading,
+.invention-detail-page .patent-search-empty { padding: 20px; }
+.invention-detail-page .patent-search-notice p,
+.invention-detail-page .patent-search-loading p,
+.invention-detail-page .patent-search-empty p,
+.invention-detail-page .patent-search-message,
+.invention-detail-page .overlap-disclaimer { font-size: 15px; line-height: 1.65; }
+.invention-detail-page .patent-search-notice strong,
+.invention-detail-page .patent-search-loading strong,
+.invention-detail-page .patent-search-empty strong { font-size: 16px; }
+.invention-detail-page .patent-search-terms { gap: 12px; }
+.invention-detail-page .patent-search-terms > span,
+.invention-detail-page .patent-search-terms code { font-size: 13px; line-height: 1.45; }
+.invention-detail-page .patent-search-terms code { padding: 8px 11px; }
+.invention-detail-page .patent-result-list { gap: 20px; }
+.invention-detail-page .patent-result-list > li { padding: clamp(24px, 3vw, 34px); grid-template-columns: 150px minmax(0, 1fr); gap: 28px; }
+.invention-detail-page .patent-result-number { gap: 12px; }
+.invention-detail-page .patent-result-number span { font-size: 28px; }
+.invention-detail-page .patent-result-number strong { font-size: 13px; line-height: 1.5; }
+.invention-detail-page .patent-result-copy { max-width: 90ch; }
+.invention-detail-page .patent-result-copy h3 { max-width: 44ch; font-size: clamp(22px, 2.1vw, 27px); line-height: 1.35; }
+.invention-detail-page .patent-result-copy dl { margin-top: 16px; gap: 10px 28px; }
+.invention-detail-page .patent-result-copy dl div { gap: 8px; font-size: 13px; line-height: 1.55; }
+.invention-detail-page .patent-result-copy .patent-abstract { margin: 20px 0 0; display: -webkit-box; overflow: hidden; white-space: pre-line; color: #b8c7d8; font-size: 16px; line-height: 1.75; -webkit-box-orient: vertical; -webkit-line-clamp: 5; }
+.invention-detail-page .patent-result-copy .patent-abstract.expanded { display: block; overflow: visible; }
+.invention-detail-page .patent-abstract-toggle { margin-top: 10px; padding: 5px 0; border: 0; border-bottom: 1px solid transparent; background: transparent; color: #67e8f9; cursor: pointer; font: inherit; font-size: 14px; font-weight: 700; }
+.invention-detail-page .patent-abstract-toggle:hover { border-bottom-color: currentColor; color: #a5f3fc; }
+.invention-detail-page .patent-abstract-toggle:focus-visible,
+.invention-detail-page .patent-result-copy > a:focus-visible,
+.invention-detail-page .draft-section-nav a:focus-visible,
+.invention-detail-page .draft-section-card header button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 4px; }
+.invention-detail-page .patent-result-copy > a { margin-top: 22px; gap: 7px; font-size: 14px; line-height: 1.5; }
+.invention-detail-page .patent-result-copy > a small { font-size: 13px; }
+
+.invention-detail-page .patent-results-browser { min-width: 0; display: grid; gap: 18px; }
+.invention-detail-page .patent-filter-panel { border: 1px solid rgba(56,189,248,.18); border-radius: 13px; background: linear-gradient(145deg, rgba(13,27,46,.84), rgba(5,11,24,.72)); overflow: hidden; }
+.invention-detail-page .patent-filter-panel > summary { display: none; }
+.invention-detail-page .patent-filter-form { padding: 20px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.invention-detail-page .patent-filter-form label { min-width: 0; display: grid; align-content: start; gap: 7px; }
+.invention-detail-page .patent-filter-form label > span { color: #b8c7d8; font-size: 13px; font-weight: 700; line-height: 1.4; }
+.invention-detail-page .patent-filter-form input,
+.invention-detail-page .patent-filter-form select { width: 100%; min-width: 0; min-height: 46px; padding: 10px 12px; border: 1px solid rgba(56,189,248,.2); border-radius: 8px; background: #081426; color: #f8fafc; font: inherit; font-size: 15px; color-scheme: dark; }
+.invention-detail-page .patent-filter-form input::placeholder { color: #718198; }
+.invention-detail-page .patent-filter-form input:focus-visible,
+.invention-detail-page .patent-filter-form select:focus-visible,
+.invention-detail-page .patent-filter-actions button:focus-visible,
+.invention-detail-page .patent-filter-empty button:focus-visible,
+.invention-detail-page .patent-result-pagination button:focus-visible,
+.invention-detail-page .patent-filter-panel > summary:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+.invention-detail-page .patent-filter-wide { grid-column: span 2; }
+.invention-detail-page .patent-filter-actions { grid-column: span 2; display: flex; align-items: end; justify-content: flex-end; gap: 10px; }
+.invention-detail-page .patent-filter-actions button,
+.invention-detail-page .patent-filter-empty button,
+.invention-detail-page .patent-result-pagination button { min-height: 44px; padding: 0 15px; border: 1px solid rgba(56,189,248,.25); border-radius: 8px; background: rgba(13,27,46,.94); color: #bae6fd; cursor: pointer; font: inherit; font-size: 14px; font-weight: 700; }
+.invention-detail-page .patent-filter-actions button[type="submit"] { border-color: rgba(16,185,129,.45); background: linear-gradient(115deg, #0b3d36, #10b981 58%, #38bdf8); color: #f8fafc; }
+.invention-detail-page .patent-filter-actions button:hover:not(:disabled),
+.invention-detail-page .patent-filter-empty button:hover,
+.invention-detail-page .patent-result-pagination button:hover:not(:disabled) { border-color: #38bdf8; box-shadow: 0 0 18px rgba(34,211,238,.1); }
+.invention-detail-page .patent-filter-actions button:disabled,
+.invention-detail-page .patent-result-pagination button:disabled { opacity: .42; cursor: not-allowed; }
+.invention-detail-page .patent-filter-error { padding: 12px 14px; border: 1px solid rgba(248,113,113,.24); border-radius: 9px; background: rgba(127,29,29,.2); color: #fecaca; font-size: 15px; line-height: 1.55; }
+.invention-detail-page .patent-active-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.invention-detail-page .patent-active-filters strong { color: #94a3b8; font-size: 13px; }
+.invention-detail-page .patent-active-filters span { padding: 6px 9px; border: 1px solid rgba(34,211,238,.22); border-radius: 99px; background: rgba(34,211,238,.07); color: #bae6fd; font-size: 13px; line-height: 1.35; }
+.invention-detail-page .patent-results-count { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-block: 1px solid rgba(56,189,248,.12); }
+.invention-detail-page .patent-results-count strong { color: #f8fafc; font-size: 16px; line-height: 1.5; }
+.invention-detail-page .patent-results-count span { color: #94a3b8; font-size: 13px; line-height: 1.5; text-align: right; }
+.invention-detail-page .patent-filter-empty { padding: 28px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 16px; border: 1px dashed rgba(56,189,248,.24); border-radius: 12px; background: rgba(5,11,24,.4); }
+.invention-detail-page .patent-filter-empty > span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: rgba(34,211,238,.08); color: #22d3ee; font-size: 20px; }
+.invention-detail-page .patent-filter-empty strong { color: #f8fafc; font-size: 18px; line-height: 1.4; }
+.invention-detail-page .patent-filter-empty p { margin: 4px 0 0; color: #94a3b8; font-size: 15px; line-height: 1.65; }
+.invention-detail-page .patent-result-pagination { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.invention-detail-page .patent-result-pagination span { color: #b8c7d8; font-size: 14px; font-weight: 650; }
+
+.invention-detail-page .patent-comparison-matrix { min-width: 0; margin-top: 18px; padding-top: 30px; display: grid; gap: 20px; border-top: 1px solid rgba(56,189,248,.16); }
+.invention-detail-page .patent-matrix-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.invention-detail-page .patent-matrix-heading > div { min-width: 0; display: flex; align-items: center; gap: 15px; }
+.invention-detail-page .patent-matrix-heading .eyebrow { margin-bottom: 5px; font-size: 12px; }
+.invention-detail-page .patent-matrix-heading h2 { margin: 0; color: #f8fafc; font-family: Georgia, serif; font-size: clamp(24px, 2.2vw, 29px); font-weight: 500; line-height: 1.3; }
+.invention-detail-page .patent-matrix-heading p { max-width: 68ch; margin: 6px 0 0; color: #94a3b8; font-size: 15px; line-height: 1.65; }
+.invention-detail-page .patent-matrix-icon { width: 45px; height: 45px; display: grid; place-items: center; flex: none; border: 1px solid rgba(34,211,238,.26); border-radius: 12px; background: linear-gradient(135deg, #0b3d36, rgba(56,189,248,.16)); color: #67e8f9; font-size: 21px; box-shadow: 0 0 22px rgba(34,211,238,.07); }
+.invention-detail-page .matrix-version { padding: 7px 10px; flex: none; border: 1px solid rgba(16,185,129,.3); border-radius: 99px; background: rgba(16,185,129,.08); color: #6ee7b7; font-size: 13px; font-weight: 750; }
+.invention-detail-page .matrix-version.stale { border-color: rgba(251,191,36,.3); background: rgba(120,53,15,.2); color: #fde68a; }
+.invention-detail-page .matrix-review-note { padding: 13px 15px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(56,189,248,.17); border-radius: 9px; background: rgba(34,211,238,.045); }
+.invention-detail-page .matrix-review-note > span { width: 25px; height: 25px; display: grid; place-items: center; flex: none; border-radius: 50%; background: rgba(34,211,238,.1); color: #67e8f9; font-size: 13px; font-weight: 800; }
+.invention-detail-page .matrix-review-note p { margin: 0; color: #b8c7d8; font-size: 15px; line-height: 1.6; }
+.invention-detail-page .matrix-selection-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.invention-detail-page .matrix-selection-toolbar > div { display: flex; align-items: center; gap: 10px; }
+.invention-detail-page .matrix-selection-toolbar strong { color: #f8fafc; font-size: 16px; }
+.invention-detail-page .matrix-selection-toolbar span { color: #94a3b8; font-size: 13px; }
+.invention-detail-page .matrix-selection-toolbar button { min-height: 40px; padding: 0 13px; border: 1px solid rgba(56,189,248,.22); border-radius: 8px; background: rgba(13,27,46,.86); color: #bae6fd; cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; }
+.invention-detail-page .matrix-selection-toolbar button:hover:not(:disabled) { border-color: #38bdf8; box-shadow: 0 0 16px rgba(34,211,238,.08); }
+.invention-detail-page .matrix-selection-toolbar button:disabled { opacity: .42; cursor: not-allowed; }
+.invention-detail-page .matrix-patent-selector { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 10px; }
+.invention-detail-page .matrix-patent-selector label { min-width: 0; min-height: 98px; padding: 14px 14px 14px 42px; position: relative; display: grid; align-content: center; gap: 5px; border: 1px solid rgba(56,189,248,.15); border-radius: 10px; background: rgba(5,11,24,.42); cursor: pointer; transition: border-color .2s ease, background .2s ease, box-shadow .2s ease; }
+.invention-detail-page .matrix-patent-selector label:hover { border-color: rgba(34,211,238,.36); }
+.invention-detail-page .matrix-patent-selector label.selected { border-color: rgba(16,185,129,.42); background: rgba(11,61,54,.24); box-shadow: 0 0 20px rgba(16,185,129,.06); }
+.invention-detail-page .matrix-patent-selector label[aria-disabled="true"] { opacity: .46; cursor: not-allowed; }
+.invention-detail-page .matrix-patent-selector input { position: absolute; opacity: 0; }
+.invention-detail-page .matrix-patent-selector label > span { width: 19px; height: 19px; position: absolute; top: 17px; left: 14px; display: grid; place-items: center; border: 1px solid rgba(56,189,248,.32); border-radius: 5px; background: #081426; color: transparent; font-size: 11px; }
+.invention-detail-page .matrix-patent-selector input:checked + span { border-color: #10b981; background: #0b3d36; color: #6ee7b7; }
+.invention-detail-page .matrix-patent-selector input:focus-visible + span { outline: 2px solid #38bdf8; outline-offset: 3px; }
+.invention-detail-page .matrix-patent-selector strong { min-width: 0; display: -webkit-box; overflow: hidden; color: #e5eef7; font-size: 14px; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.invention-detail-page .matrix-patent-selector small { color: #7e90a5; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.invention-detail-page .patent-matrix-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; border: 1px solid rgba(56,189,248,.18); border-radius: 12px; background: rgba(5,11,24,.4); scrollbar-color: rgba(56,189,248,.42) rgba(8,20,38,.8); }
+.invention-detail-page .patent-matrix-scroll:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+.invention-detail-page .patent-matrix-table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; color: #dbe7f2; }
+.invention-detail-page .patent-matrix-table th,
+.invention-detail-page .patent-matrix-table td { min-width: 240px; max-width: 290px; padding: 17px; vertical-align: top; border-right: 1px solid rgba(56,189,248,.1); border-bottom: 1px solid rgba(56,189,248,.1); text-align: left; }
+.invention-detail-page .patent-matrix-table tr:last-child > * { border-bottom: 0; }
+.invention-detail-page .patent-matrix-table tr > *:last-child { border-right: 0; }
+.invention-detail-page .patent-matrix-table thead th { background: #0d1b2e; }
+.invention-detail-page .patent-matrix-table thead th > a { display: flex; align-items: flex-start; gap: 6px; color: #f8fafc; font-family: Georgia, serif; font-size: 17px; font-weight: 500; line-height: 1.4; }
+.invention-detail-page .patent-matrix-table thead th > a:hover { color: #67e8f9; }
+.invention-detail-page .patent-matrix-table thead th > small { margin-top: 7px; display: block; color: #7e90a5; font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+.invention-detail-page .patent-matrix-table .matrix-feature-column { width: 290px; min-width: 290px; position: sticky; z-index: 1; left: 0; background: #081426; box-shadow: 8px 0 18px rgba(0,0,0,.16); }
+.invention-detail-page .patent-matrix-table thead .matrix-feature-column { z-index: 2; background: #0b1a2e; color: #94a3b8; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+.invention-detail-page .patent-matrix-table tbody .matrix-feature-column strong { display: block; color: #f8fafc; font-size: 15px; line-height: 1.6; }
+.invention-detail-page .patent-matrix-table tbody .matrix-feature-column span,
+.invention-detail-page .patent-matrix-table tbody .matrix-feature-column small { margin-top: 8px; display: block; color: #67e8f9; font-size: 12px; line-height: 1.45; }
+.invention-detail-page .patent-matrix-table tbody .matrix-feature-column small { margin-top: 3px; color: #7e90a5; }
+.invention-detail-page .matrix-patent-summary { margin: 13px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 10px; }
+.invention-detail-page .matrix-patent-summary div { display: flex; justify-content: space-between; gap: 8px; }
+.invention-detail-page .matrix-patent-summary dt,
+.invention-detail-page .matrix-patent-summary dd { margin: 0; color: #7e90a5; font-size: 11px; line-height: 1.35; }
+.invention-detail-page .matrix-patent-summary dd { color: #d8e5f1; font-weight: 750; }
+.invention-detail-page .matrix-match { border: 1px solid rgba(56,189,248,.15); border-radius: 9px; background: rgba(8,20,38,.68); overflow: hidden; }
+.invention-detail-page .matrix-match > summary { min-height: 70px; padding: 12px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; cursor: pointer; list-style: none; }
+.invention-detail-page .matrix-match > summary::-webkit-details-marker { display: none; }
+.invention-detail-page .matrix-match > summary strong { color: #f8fafc; font-size: 13px; line-height: 1.4; text-transform: uppercase; }
+.invention-detail-page .matrix-match > summary span { grid-column: 1 / -1; color: #94a3b8; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.invention-detail-page .matrix-match > summary i { color: #67e8f9; font-style: normal; font-size: 17px; }
+.invention-detail-page .matrix-match[open] > summary i { transform: rotate(45deg); }
+.invention-detail-page .matrix-match > p { margin: 0; padding: 11px 12px 13px; border-top: 1px solid rgba(56,189,248,.12); color: #b8c7d8; font-size: 13px; line-height: 1.65; }
+.invention-detail-page .matrix-match-full { border-color: rgba(248,113,113,.25); }
+.invention-detail-page .matrix-match-partial { border-color: rgba(251,191,36,.25); }
+.invention-detail-page .matrix-match-not_found { border-color: rgba(16,185,129,.24); }
+.invention-detail-page .matrix-match-uncertain { border-color: rgba(56,189,248,.22); }
+.invention-detail-page .matrix-match-full > summary strong { color: #fca5a5; }
+.invention-detail-page .matrix-match-partial > summary strong { color: #fde68a; }
+.invention-detail-page .matrix-match-not_found > summary strong { color: #6ee7b7; }
+.invention-detail-page .matrix-match-uncertain > summary strong { color: #7dd3fc; }
+.invention-detail-page .matrix-match > summary:focus-visible,
+.invention-detail-page .patent-matrix-table thead th > a:focus-visible,
+.invention-detail-page .patent-matrix-cards a:focus-visible,
+.invention-detail-page .matrix-selection-toolbar button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+.invention-detail-page .patent-matrix-cards { display: none; }
+
+.invention-detail-page .overlap-summary { padding: 24px; }
+.invention-detail-page .overlap-summary > div span,
+.invention-detail-page .overlap-summary dt,
+.invention-detail-page .draft-meta small,
+.invention-detail-page .draft-status { font-size: 13px; line-height: 1.45; }
+.invention-detail-page .overlap-summary > div strong { font-size: 24px; }
+.invention-detail-page .overlap-table th { padding: 14px; font-size: 13px; line-height: 1.4; }
+.invention-detail-page .overlap-table td { padding: 18px 14px; font-size: 15px; line-height: 1.7; }
+.invention-detail-page .overlap-table td > strong { font-size: 15px; line-height: 1.5; }
+.invention-detail-page .overlap-table td > small,
+.invention-detail-page .overlap-match,
+.invention-detail-page .overlap-keywords code { font-size: 13px; line-height: 1.45; }
+
+.invention-detail-page .draft-generation-form { padding: 20px; gap: 20px; }
+.invention-detail-page .draft-acknowledgement { align-items: start; }
+.invention-detail-page .draft-acknowledgement strong { max-width: 76ch; font-size: 15px; line-height: 1.65; }
+.invention-detail-page .draft-editor-layout { grid-template-columns: 220px minmax(0, 1fr); gap: 24px; }
+.invention-detail-page .draft-section-nav { padding: 20px; top: 82px; gap: 5px; }
+.invention-detail-page .draft-section-nav > span { margin-bottom: 10px; font-size: 13px; }
+.invention-detail-page .draft-section-nav a { padding: 11px 9px; gap: 9px; font-size: 14px; line-height: 1.4; }
+.invention-detail-page .draft-section-nav small { font-size: 13px; }
+.invention-detail-page .draft-editor-form { gap: 22px; }
+.invention-detail-page .draft-save-bar { padding: 18px; }
+.invention-detail-page .draft-save-bar small,
+.invention-detail-page .draft-unsaved { font-size: 13px; line-height: 1.45; }
+.invention-detail-page .draft-section-cards { gap: 24px; }
+.invention-detail-page .draft-section-card { padding: clamp(24px, 2.5vw, 32px); }
+.invention-detail-page .draft-section-card header { margin-bottom: 18px; }
+.invention-detail-page .draft-section-card header span,
+.invention-detail-page .draft-section-card header button { font-size: 13px; line-height: 1.4; }
+.invention-detail-page .draft-section-card h3 { font-size: clamp(22px, 2vw, 25px); line-height: 1.3; }
+.invention-detail-page .draft-section-card textarea { min-height: 170px; padding: 18px; color: #eef6ff; font-size: 16px; line-height: 1.7; }
+.invention-detail-page .draft-section-card textarea:focus-visible { border-color: #38bdf8; outline: 2px solid rgba(56, 189, 248, .75); outline-offset: 2px; box-shadow: 0 0 0 5px rgba(56,189,248,.1), 0 0 22px rgba(34,211,238,.06); }
+.invention-detail-page .draft-export-section { padding: clamp(24px, 3vw, 32px); display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 18px 28px; border: 1px solid rgba(56,189,248,.18); border-radius: 12px; background: linear-gradient(135deg, rgba(11,61,54,.18), rgba(5,11,24,.55)); }
+.invention-detail-page .draft-export-heading { display: flex; align-items: center; gap: 15px; }
+.invention-detail-page .draft-export-heading > span { width: 44px; height: 44px; display: grid; place-items: center; flex: none; border: 1px solid rgba(34,211,238,.26); border-radius: 12px; background: rgba(34,211,238,.08); color: #67e8f9; font-size: 20px; }
+.invention-detail-page .draft-export-heading h3 { margin: 0; color: #f8fafc; font-family: Georgia, serif; font-size: clamp(22px, 2vw, 25px); font-weight: 500; line-height: 1.3; }
+.invention-detail-page .draft-export-heading p { max-width: 66ch; margin: 5px 0 0; color: #94a3b8; font-size: 15px; line-height: 1.65; }
+.invention-detail-page .draft-export-controls { display: flex; align-items: center; gap: 10px; }
+.invention-detail-page .draft-export-controls button { min-width: 154px; min-height: 48px; padding: 0 17px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(56,189,248,.32); border-radius: 8px; background: linear-gradient(115deg, #0b3d36, #10b981 48%, #38bdf8); color: #f8fafc; cursor: pointer; font-size: 14px; font-weight: 700; box-shadow: 0 0 24px rgba(16,185,129,.1); }
+.invention-detail-page .draft-export-controls button:last-child { background: rgba(13,27,46,.9); color: #bae6fd; }
+.invention-detail-page .draft-export-controls button:hover:not(:disabled) { border-color: rgba(34,211,238,.7); box-shadow: 0 0 28px rgba(34,211,238,.14); transform: translateY(-1px); }
+.invention-detail-page .draft-export-controls button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+.invention-detail-page .draft-export-controls button:disabled { opacity: .46; cursor: not-allowed; box-shadow: none; }
+.invention-detail-page .draft-export-note { margin: 0; color: #6ee7b7; font-size: 13px; line-height: 1.5; }
+.invention-detail-page .draft-export-note.blocked { color: #fbbf8a; }
+.invention-detail-page .draft-export-section > .patent-search-message { grid-column: 1 / -1; }
+
+@media (max-width: 780px) {
+  .invention-detail-page .detail-step-card > summary { padding: 20px; }
+  .invention-detail-page .detail-step-content { padding: 22px; }
+  .invention-detail-page .patent-result-list > li { grid-template-columns: 1fr; gap: 18px; }
+  .invention-detail-page .draft-editor-layout { grid-template-columns: 1fr; }
+  .invention-detail-page .draft-section-nav { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .invention-detail-page .draft-export-section { grid-template-columns: 1fr; }
+  .invention-detail-page .draft-export-controls { width: 100%; }
+  .invention-detail-page .draft-export-controls button { flex: 1; }
+  .invention-detail-page .overlap-table td::before { font-size: 13px; line-height: 1.4; }
+  .invention-detail-page .patent-filter-panel > summary { min-height: 54px; padding: 14px 16px; display: flex; align-items: center; gap: 10px; color: #f8fafc; cursor: pointer; font-size: 15px; font-weight: 700; list-style: none; }
+  .invention-detail-page .patent-filter-panel > summary::-webkit-details-marker { display: none; }
+  .invention-detail-page .patent-filter-panel > summary small { margin-left: auto; padding: 4px 7px; border-radius: 99px; background: rgba(34,211,238,.09); color: #67e8f9; font-size: 12px; }
+  .invention-detail-page .patent-filter-panel > summary i { color: #67e8f9; font-style: normal; transition: transform .2s ease; }
+  .invention-detail-page .patent-filter-panel[open] > summary i { transform: rotate(180deg); }
+  .invention-detail-page .patent-filter-panel[open] > summary { border-bottom: 1px solid rgba(56,189,248,.14); }
+  .invention-detail-page .patent-filter-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .invention-detail-page .patent-filter-actions { grid-column: 1 / -1; }
+  .invention-detail-page .patent-results-count { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .invention-detail-page .patent-results-count span { text-align: left; }
+  .invention-detail-page .patent-matrix-heading { align-items: flex-start; flex-direction: column; }
+  .invention-detail-page .matrix-selection-toolbar { align-items: flex-start; flex-direction: column; }
+  .invention-detail-page .patent-matrix-scroll { display: none; }
+  .invention-detail-page .patent-matrix-cards { display: grid; gap: 16px; }
+  .invention-detail-page .patent-matrix-cards > article { border: 1px solid rgba(56,189,248,.17); border-radius: 12px; background: rgba(5,11,24,.42); overflow: hidden; }
+  .invention-detail-page .patent-matrix-cards > article > header { padding: 18px; border-bottom: 1px solid rgba(56,189,248,.12); background: rgba(13,27,46,.62); }
+  .invention-detail-page .patent-matrix-cards > article > header > span { color: #22d3ee; font-size: 12px; font-weight: 750; letter-spacing: .08em; }
+  .invention-detail-page .patent-matrix-cards h3 { margin: 7px 0 0; color: #f8fafc; font-size: 18px; line-height: 1.55; }
+  .invention-detail-page .patent-matrix-cards header p { margin: 8px 0 0; color: #94a3b8; font-size: 13px; line-height: 1.5; }
+  .invention-detail-page .patent-matrix-cards header p strong { color: #67e8f9; }
+  .invention-detail-page .patent-matrix-cards article > div { padding: 14px; display: grid; gap: 12px; }
+  .invention-detail-page .patent-matrix-cards article section { padding: 14px; border: 1px solid rgba(56,189,248,.13); border-radius: 9px; background: rgba(8,20,38,.6); }
+  .invention-detail-page .patent-matrix-cards article section > a { display: flex; gap: 6px; color: #f8fafc; font-family: Georgia, serif; font-size: 16px; line-height: 1.45; }
+  .invention-detail-page .patent-matrix-cards article section > small { margin: 5px 0 12px; display: block; color: #7e90a5; font-size: 12px; line-height: 1.45; }
+}
+
+@media (max-width: 520px) {
+  .invention-detail-page .invention-detail-heading h1 { font-size: 30px; }
+  .invention-detail-page .detail-step-stack { gap: 20px; }
+  .invention-detail-page .detail-step-card > summary { min-height: 88px; padding: 18px; grid-template-columns: 36px minmax(0, 1fr) 20px; gap: 12px; }
+  .invention-detail-page .detail-step-card > summary > span { width: 36px; height: 36px; }
+  .invention-detail-page .detail-step-card > summary strong { font-size: 22px; }
+  .invention-detail-page .detail-step-content { padding: 18px; }
+  .invention-detail-page .invention-copy,
+  .invention-detail-page .prior-activity,
+  .invention-detail-page .analysis-start,
+  .invention-detail-page .analysis-review,
+  .invention-detail-page .feature-editor,
+  .invention-detail-page .image-upload-card,
+  .invention-detail-page .patent-result-list > li,
+  .invention-detail-page .draft-section-card { padding: 20px; }
+  .invention-detail-page .patent-result-copy h3 { font-size: 22px; }
+  .invention-detail-page .patent-result-copy dl { display: grid; gap: 10px; }
+  .invention-detail-page .patent-result-copy dl div { display: grid; gap: 2px; }
+  .invention-detail-page .patent-result-copy > a { align-items: flex-start; flex-wrap: wrap; }
+  .invention-detail-page .overlap-table td { grid-template-columns: 1fr; gap: 4px; }
+  .invention-detail-page .draft-section-nav { grid-template-columns: 1fr; }
+  .invention-detail-page .draft-section-card header { align-items: flex-start; }
+  .invention-detail-page .draft-export-controls { align-items: stretch; flex-direction: column; }
+  .invention-detail-page .draft-export-controls button { width: 100%; }
+  .invention-detail-page .feature-editor-list li { grid-template-columns: 28px minmax(0, 1fr); }
+  .invention-detail-page .feature-editor-list li > div { grid-column: 2; }
+  .invention-detail-page .patent-filter-form { padding: 16px; grid-template-columns: 1fr; }
+  .invention-detail-page .patent-filter-wide,
+  .invention-detail-page .patent-filter-actions { grid-column: auto; }
+  .invention-detail-page .patent-filter-actions { align-items: stretch; flex-direction: column-reverse; }
+  .invention-detail-page .patent-filter-actions button { width: 100%; }
+  .invention-detail-page .patent-filter-empty { grid-template-columns: auto minmax(0, 1fr); }
+  .invention-detail-page .patent-filter-empty button { grid-column: 1 / -1; width: 100%; }
+  .invention-detail-page .patent-result-pagination { justify-content: space-between; gap: 8px; }
+  .invention-detail-page .patent-result-pagination button { padding-inline: 11px; font-size: 13px; }
+  .invention-detail-page .matrix-selection-toolbar > div:last-child { width: 100%; align-items: stretch; flex-direction: column; }
+  .invention-detail-page .matrix-selection-toolbar button { width: 100%; }
+  .invention-detail-page .matrix-patent-selector { grid-template-columns: 1fr; }
+}
+
+/* Invention workflow progress */
+.workflow-progress-panel { margin: 30px 0 28px; padding: clamp(22px, 3vw, 30px); display: grid; gap: 22px; border: 1px solid rgba(56,189,248,.2); border-radius: 16px; background: linear-gradient(145deg, rgba(13,27,46,.92), rgba(5,11,24,.8)); box-shadow: 0 22px 60px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.025); }
+.workflow-progress-header { display: flex; align-items: end; justify-content: space-between; gap: 28px; }
+.workflow-progress-header h2 { margin: 0; color: #f8fafc; font-family: Georgia, serif; font-size: clamp(26px, 2.5vw, 32px); font-weight: 500; line-height: 1.2; }
+.workflow-progress-header > div:first-child > p:last-child { max-width: 72ch; margin: 7px 0 0; color: #94a3b8; font-size: 15px; line-height: 1.65; }
+.workflow-completion { min-width: 170px; display: grid; grid-template-columns: auto auto; align-items: end; gap: 4px 10px; }
+.workflow-completion strong { color: #f8fafc; font-family: Georgia, serif; font-size: 28px; font-weight: 500; line-height: 1; }
+.workflow-completion span { color: #94a3b8; font-size: 13px; line-height: 1.35; text-align: right; }
+.workflow-completion > i { height: 5px; grid-column: 1 / -1; margin-top: 6px; display: block; border-radius: 99px; background: rgba(56,189,248,.12); overflow: hidden; }
+.workflow-completion > i > b { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg, #10b981, #22d3ee); box-shadow: 0 0 12px rgba(34,211,238,.32); transition: width .25s ease; }
+.workflow-stepper { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; list-style: none; }
+.workflow-step { min-width: 0; position: relative; }
+.workflow-step > button { width: 100%; min-height: 172px; padding: 15px; display: grid; align-content: start; gap: 12px; border: 1px solid rgba(56,189,248,.13); border-radius: 11px; background: rgba(5,11,24,.46); color: #f8fafc; cursor: pointer; text-align: left; transition: border-color .2s ease, background .2s ease, transform .2s ease, box-shadow .2s ease; }
+.workflow-step > button:hover { border-color: rgba(34,211,238,.38); background: rgba(13,27,46,.82); box-shadow: 0 0 24px rgba(34,211,238,.06); transform: translateY(-2px); }
+.workflow-step > button:focus-visible { border-color: #38bdf8; outline: 2px solid #38bdf8; outline-offset: 3px; }
+.workflow-step-number { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid rgba(148,163,184,.23); border-radius: 50%; background: #0d1b2e; color: #94a3b8; font-size: 11px; font-weight: 800; }
+.workflow-step-copy { min-width: 0; display: grid; align-content: start; gap: 5px; }
+.workflow-step-copy > strong { color: #f8fafc; font-size: 14px; line-height: 1.4; }
+.workflow-step-copy > small { color: #718198; font-size: 12px; line-height: 1.35; }
+.workflow-step-copy > .workflow-status-text { width: fit-content; padding: 3px 6px; border: 1px solid currentColor; border-radius: 99px; color: #94a3b8; font-size: 10px; font-weight: 750; text-transform: uppercase; }
+.workflow-step-copy > em { margin-top: 2px; color: #94a3b8; font-size: 12px; font-style: normal; line-height: 1.5; }
+.workflow-step.status-completed .workflow-step-number { border-color: #10b981; background: rgba(16,185,129,.12); color: #6ee7b7; box-shadow: 0 0 15px rgba(16,185,129,.12); }
+.workflow-step.status-completed .workflow-status-text { color: #6ee7b7; }
+.workflow-step.status-action_required .workflow-step-number,
+.workflow-step.status-in_progress .workflow-step-number { border-color: #38bdf8; color: #7dd3fc; box-shadow: 0 0 14px rgba(56,189,248,.1); }
+.workflow-step.status-action_required .workflow-status-text,
+.workflow-step.status-in_progress .workflow-status-text { color: #7dd3fc; }
+.workflow-step.status-outdated .workflow-step-number { border-color: #f59e0b; background: rgba(245,158,11,.09); color: #fbbf24; }
+.workflow-step.status-outdated .workflow-status-text { color: #fbbf24; }
+.workflow-step.status-error .workflow-step-number { border-color: #f87171; background: rgba(248,113,113,.09); color: #fca5a5; }
+.workflow-step.status-error .workflow-status-text { color: #fca5a5; }
+.workflow-step.status-in_progress .workflow-step-number { animation: status-breathe 2.8s ease-in-out infinite; }
+.workflow-recommendation { padding: 18px 20px; display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 15px; border: 1px solid rgba(16,185,129,.24); border-radius: 12px; background: linear-gradient(115deg, rgba(11,61,54,.32), rgba(34,211,238,.055)); }
+.workflow-recommendation > span { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 10px; background: rgba(16,185,129,.12); color: #6ee7b7; font-size: 19px; }
+.workflow-recommendation small { color: #22d3ee; font-size: 11px; font-weight: 750; letter-spacing: .1em; }
+.workflow-recommendation h3 { margin: 5px 0 0; color: #f8fafc; font-family: Georgia, serif; font-size: 22px; font-weight: 500; line-height: 1.3; }
+.workflow-recommendation p { max-width: 72ch; margin: 5px 0 0; color: #aebdcd; font-size: 14px; line-height: 1.6; }
+.workflow-recommendation > button { min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid rgba(56,189,248,.34); border-radius: 8px; background: linear-gradient(115deg, #0b3d36, #10b981 55%, #38bdf8); color: #f8fafc; cursor: pointer; font-size: 13px; font-weight: 700; }
+.workflow-recommendation > button:hover { border-color: #67e8f9; box-shadow: 0 0 25px rgba(34,211,238,.13); }
+.workflow-recommendation > button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+.draft-export-section:focus-visible { outline: 2px solid #38bdf8; outline-offset: 4px; }
+.workflow-legal-notice { margin-top: 16px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 11px; border: 1px solid rgba(56,189,248,.2); border-radius: 10px; background: rgba(13,27,46,.72); color: #cbd5e1; }
+.workflow-legal-notice > span { width: 24px; height: 24px; display: grid; place-items: center; flex: none; border: 1px solid rgba(34,211,238,.35); border-radius: 50%; color: #22d3ee; font-size: 13px; font-weight: 800; }
+.workflow-legal-notice p { max-width: 82ch; margin: 0; font-size: 15px; line-height: 1.65; }
+
+/* Invention timeline */
+.invention-timeline { margin: 0 0 28px; padding: clamp(22px, 3vw, 30px); display: grid; gap: 22px; border: 1px solid rgba(56,189,248,.18); border-radius: 16px; background: linear-gradient(145deg, rgba(13,27,46,.88), rgba(5,11,24,.76)); box-shadow: 0 20px 55px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.025); }
+.timeline-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.timeline-heading > div { min-width: 0; display: flex; align-items: center; gap: 15px; }
+.timeline-heading-icon { width: 44px; height: 44px; display: grid; place-items: center; flex: none; border: 1px solid rgba(34,211,238,.25); border-radius: 12px; background: linear-gradient(135deg, #0b3d36, rgba(56,189,248,.16)); color: #67e8f9; font-size: 21px; box-shadow: 0 0 22px rgba(34,211,238,.07); }
+.timeline-heading .eyebrow { margin-bottom: 4px; font-size: 11px; }
+.timeline-heading h2 { margin: 0; color: #f8fafc; font-family: Georgia, serif; font-size: clamp(26px, 2.5vw, 32px); font-weight: 500; line-height: 1.25; }
+.timeline-heading p { max-width: 68ch; margin: 6px 0 0; color: #94a3b8; font-size: 15px; line-height: 1.6; }
+.timeline-count { padding: 7px 10px; flex: none; border: 1px solid rgba(56,189,248,.22); border-radius: 99px; background: rgba(34,211,238,.06); color: #bae6fd; font-size: 13px; font-weight: 700; }
+.timeline-controls { padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border: 1px solid rgba(56,189,248,.12); border-radius: 11px; background: rgba(5,11,24,.4); }
+.timeline-filters { display: flex; flex-wrap: wrap; gap: 7px; }
+.timeline-filters button,
+.timeline-view-controls button { min-height: 38px; padding: 0 11px; border: 1px solid rgba(56,189,248,.16); border-radius: 8px; background: rgba(13,27,46,.76); color: #94a3b8; cursor: pointer; font: inherit; font-size: 13px; font-weight: 650; }
+.timeline-filters button[aria-pressed="true"],
+.timeline-view-controls button[aria-pressed="true"] { border-color: rgba(34,211,238,.38); background: rgba(34,211,238,.1); color: #e0f7ff; box-shadow: 0 0 16px rgba(34,211,238,.06); }
+.timeline-view-controls { display: flex; align-items: end; gap: 10px; }
+.timeline-view-controls > label { display: grid; gap: 5px; }
+.timeline-view-controls > label > span { color: #94a3b8; font-size: 11px; font-weight: 700; }
+.timeline-view-controls select { min-height: 38px; padding: 0 30px 0 10px; border: 1px solid rgba(56,189,248,.18); border-radius: 8px; background: #081426; color: #e2edf7; font: inherit; font-size: 13px; color-scheme: dark; }
+.timeline-view-controls > div { display: flex; gap: 4px; }
+.timeline-filters button:focus-visible,
+.timeline-view-controls button:focus-visible,
+.timeline-view-controls select:focus-visible,
+.timeline-event footer a:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+.timeline-list { margin: 0; padding: 0; display: grid; list-style: none; }
+.timeline-event { min-width: 0; display: grid; grid-template-columns: 175px 26px minmax(0, 1fr); align-items: stretch; gap: 12px; }
+.timeline-event-time { padding-top: 20px; text-align: right; }
+.timeline-event-time time { color: #94a3b8; font-size: 13px; line-height: 1.5; }
+.timeline-event-marker { width: 13px; height: 13px; margin: 23px auto 0; position: relative; z-index: 1; border: 2px solid #38bdf8; border-radius: 50%; background: #081426; box-shadow: 0 0 0 4px rgba(56,189,248,.08), 0 0 12px rgba(34,211,238,.13); }
+.timeline-event:not(:last-child) .timeline-event-marker::after { content: ""; width: 1px; position: absolute; top: 14px; bottom: -1000px; left: 4px; background: linear-gradient(#38bdf8, rgba(56,189,248,.12)); }
+.timeline-event { overflow: hidden; }
+.timeline-event > article { min-width: 0; margin-bottom: 14px; padding: 18px; position: relative; z-index: 1; border: 1px solid rgba(56,189,248,.14); border-radius: 11px; background: rgba(5,11,24,.5); }
+.timeline-event > article > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.timeline-category { color: #22d3ee; font-size: 11px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
+.timeline-event h3 { margin: 5px 0 0; color: #f8fafc; font-size: 18px; line-height: 1.4; }
+.timeline-event article > p { max-width: 74ch; margin: 10px 0 0; color: #aebdcd; font-size: 15px; line-height: 1.65; }
+.timeline-statuses { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.timeline-statuses span { padding: 4px 7px; border: 1px solid rgba(56,189,248,.2); border-radius: 99px; color: #bae6fd; font-size: 11px; font-weight: 750; white-space: nowrap; }
+.timeline-event-completed .timeline-statuses span:first-child { border-color: rgba(16,185,129,.3); background: rgba(16,185,129,.08); color: #6ee7b7; }
+.timeline-event-failed .timeline-statuses span:first-child { border-color: rgba(248,113,113,.35); background: rgba(127,29,29,.22); color: #fca5a5; }
+.timeline-event-in_progress .timeline-statuses span:first-child { border-color: rgba(56,189,248,.34); color: #7dd3fc; }
+.timeline-state-outdated .timeline-statuses span:last-child { border-color: rgba(245,158,11,.35); background: rgba(120,53,15,.2); color: #fde68a; }
+.timeline-state-superseded .timeline-statuses span:last-child,
+.timeline-state-historical .timeline-statuses span:last-child { border-color: rgba(148,163,184,.22); color: #a8b4c4; }
+.timeline-event-failed .timeline-event-marker { border-color: #f87171; box-shadow: 0 0 0 4px rgba(248,113,113,.07); }
+.timeline-state-outdated .timeline-event-marker { border-color: #f59e0b; }
+.timeline-event footer { margin-top: 14px; padding-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 14px; border-top: 1px solid rgba(56,189,248,.09); }
+.timeline-event footer > div { display: flex; flex-wrap: wrap; gap: 7px; }
+.timeline-event footer > div span { padding: 3px 6px; border-radius: 5px; background: rgba(148,163,184,.07); color: #8495a9; font-size: 11px; line-height: 1.4; }
+.timeline-event footer a { flex: none; color: #67e8f9; font-size: 13px; font-weight: 700; }
+.timeline-event footer a:hover { color: #cffafe; }
+.timeline-compact .timeline-event > article { padding-block: 14px; }
+.timeline-compact .timeline-event h3 { font-size: 16px; }
+.timeline-compact .timeline-event footer { margin-top: 9px; padding-top: 9px; }
+.timeline-load-error { padding: 13px 15px; border: 1px solid rgba(248,113,113,.24); border-radius: 9px; background: rgba(127,29,29,.2); color: #fecaca; font-size: 14px; line-height: 1.55; }
+.timeline-empty,
+.timeline-loading-row { padding: 24px; display: flex; align-items: center; gap: 14px; border: 1px dashed rgba(56,189,248,.22); border-radius: 11px; background: rgba(5,11,24,.36); }
+.timeline-empty > span { width: 38px; height: 38px; display: grid; place-items: center; flex: none; border-radius: 50%; background: rgba(34,211,238,.08); color: #67e8f9; font-size: 18px; }
+.timeline-empty strong { color: #f8fafc; font-size: 17px; }
+.timeline-empty p,
+.timeline-loading-row p { margin: 4px 0 0; color: #94a3b8; font-size: 14px; line-height: 1.6; }
+.timeline-loading-row > span { width: 28px; height: 28px; flex: none; }
+
+/* Deterministic clarification */
+.clarification-review { margin-top: 28px; padding: clamp(22px, 3vw, 30px); display: grid; gap: 22px; border: 1px solid rgba(56,189,248,.19); border-radius: 14px; background: linear-gradient(145deg, rgba(13,27,46,.88), rgba(5,11,24,.72)); }
+.clarification-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.clarification-header h2 { margin: 0; color: #f8fafc; font-family: Georgia, serif; font-size: clamp(24px, 2.3vw, 29px); font-weight: 500; line-height: 1.25; }
+.clarification-header p { max-width: 68ch; margin: 7px 0 0; color: #aebdcd; font-size: 16px; line-height: 1.7; }
+.clarification-status { padding: 6px 10px; flex: none; border: 1px solid rgba(56,189,248,.3); border-radius: 99px; color: #7dd3fc; font-size: 13px; font-weight: 750; }
+.clarification-status.status-completed { border-color: rgba(16,185,129,.38); background: rgba(16,185,129,.1); color: #6ee7b7; }
+.clarification-note, .clarification-review-required { padding: 15px 16px; display: flex; align-items: flex-start; gap: 11px; border: 1px solid rgba(34,211,238,.18); border-radius: 10px; background: rgba(34,211,238,.055); }
+.clarification-note > span, .clarification-review-required > span { width: 24px; height: 24px; display: grid; place-items: center; flex: none; border-radius: 50%; background: rgba(34,211,238,.1); color: #67e8f9; font-weight: 800; }
+.clarification-note p, .clarification-review-required p { max-width: 78ch; margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.65; }
+.clarification-form { display: grid; gap: 20px; }
+.clarification-list { margin: 0; padding: 0; display: grid; gap: 16px; list-style: none; }
+.clarification-list > li { padding: clamp(20px, 2.5vw, 26px); display: grid; gap: 17px; border: 1px solid rgba(56,189,248,.14); border-radius: 12px; background: rgba(5,11,24,.48); }
+.clarification-question { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: start; gap: 12px; }
+.clarification-question > span { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid rgba(34,211,238,.26); border-radius: 50%; color: #67e8f9; font-size: 12px; font-weight: 800; }
+.clarification-question h3 { margin: 0; color: #f8fafc; font-size: 19px; line-height: 1.45; }
+.clarification-question p { margin: 5px 0 0; color: #94a3b8; font-size: 13px; line-height: 1.5; }
+.clarification-question p strong { color: #bae6fd; }
+.clarification-list > li > label:not(.clarification-skip) { display: grid; gap: 8px; color: #dbeafe; font-size: 14px; font-weight: 700; }
+.clarification-list textarea { width: 100%; min-height: 120px; padding: 15px; border: 1px solid rgba(56,189,248,.2); border-radius: 9px; background: rgba(8,20,38,.9); color: #f8fafc; font: inherit; font-size: 16px; line-height: 1.7; resize: vertical; }
+.clarification-list textarea::placeholder { color: #718198; }
+.clarification-list textarea:focus-visible { border-color: #38bdf8; outline: 2px solid rgba(56,189,248,.8); outline-offset: 2px; box-shadow: 0 0 0 5px rgba(56,189,248,.09); }
+.clarification-list textarea:disabled { opacity: .55; cursor: not-allowed; }
+.clarification-skip { width: fit-content; display: flex; align-items: center; gap: 9px; color: #aebdcd; cursor: pointer; font-size: 14px; line-height: 1.5; }
+.clarification-skip input { width: 18px; height: 18px; accent-color: #10b981; }
+.clarification-empty { padding: 22px; display: flex; align-items: flex-start; gap: 14px; border: 1px dashed rgba(16,185,129,.34); border-radius: 11px; background: rgba(16,185,129,.055); }
+.clarification-empty > span { width: 32px; height: 32px; display: grid; place-items: center; flex: none; border-radius: 50%; background: rgba(16,185,129,.13); color: #6ee7b7; }
+.clarification-empty strong { color: #f8fafc; font-size: 17px; }
+.clarification-empty p { margin: 5px 0 0; color: #aebdcd; font-size: 15px; line-height: 1.65; }
+.clarification-review-required { border-color: rgba(245,158,11,.25); background: rgba(245,158,11,.06); }
+.clarification-review-required > span { background: rgba(245,158,11,.12); color: #fbbf24; }
+.clarification-form > footer { padding-top: 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid rgba(56,189,248,.12); }
+.clarification-form > footer > p { margin: 0; color: #94a3b8; font-size: 14px; }
+.clarification-form > footer > div { display: flex; gap: 10px; }
+.clarification-form > footer button { min-height: 46px; padding: 0 16px; border: 1px solid rgba(56,189,248,.28); border-radius: 8px; color: #dbeafe; cursor: pointer; font-size: 14px; font-weight: 700; }
+.clarification-save { background: rgba(13,27,46,.9); }
+.clarification-complete { background: linear-gradient(115deg, #0b3d36, #10b981 55%, #38bdf8); color: #f8fafc !important; }
+.clarification-form > footer button:hover:not(:disabled) { border-color: #67e8f9; box-shadow: 0 0 22px rgba(34,211,238,.12); transform: translateY(-1px); }
+.clarification-form > footer button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+.clarification-form > footer button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+@media (max-width: 1100px) {
+  .workflow-stepper { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .workflow-step > button { min-height: 150px; }
+}
+
+@media (max-width: 780px) {
+  .workflow-progress-header { align-items: stretch; flex-direction: column; }
+  .workflow-completion { width: 100%; }
+  .workflow-stepper { grid-template-columns: 1fr; }
+  .workflow-step > button { min-height: 0; grid-template-columns: 34px minmax(0, 1fr); align-items: start; }
+  .workflow-step-copy > strong { font-size: 15px; }
+  .workflow-step-copy > em { font-size: 13px; }
+  .workflow-recommendation { grid-template-columns: 38px minmax(0, 1fr); }
+  .workflow-recommendation > button { width: 100%; grid-column: 1 / -1; }
+  .clarification-header, .clarification-form > footer { align-items: stretch; flex-direction: column; }
+  .clarification-form > footer > div { width: 100%; }
+  .clarification-form > footer button { flex: 1; }
+  .timeline-heading { align-items: flex-start; }
+  .timeline-controls { align-items: stretch; flex-direction: column; }
+  .timeline-view-controls { justify-content: space-between; }
+  .timeline-event { grid-template-columns: 18px minmax(0, 1fr); gap: 11px; overflow: visible; }
+  .timeline-event-time { padding: 0 0 7px; grid-column: 2; grid-row: 1; text-align: left; }
+  .timeline-event-marker { margin-top: 4px; grid-column: 1; grid-row: 1 / span 2; }
+  .timeline-event:not(:last-child) .timeline-event-marker::after { bottom: -1000px; }
+  .timeline-event > article { grid-column: 2; grid-row: 2; }
+}
+
+@media (max-width: 520px) {
+  .workflow-progress-panel { margin-block: 24px; padding: 18px; }
+  .workflow-progress-header h2 { font-size: 26px; }
+  .workflow-recommendation { padding: 16px; }
+  .clarification-review { padding: 18px; }
+  .clarification-list > li { padding: 18px; }
+  .clarification-form > footer > div { flex-direction: column; }
+  .clarification-form > footer button { width: 100%; }
+  .invention-timeline { padding: 18px; }
+  .timeline-heading { flex-direction: column; }
+  .timeline-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .timeline-filters button { width: 100%; }
+  .timeline-view-controls { align-items: stretch; flex-direction: column; }
+  .timeline-view-controls > label select { width: 100%; }
+  .timeline-view-controls > div { display: grid; grid-template-columns: 1fr 1fr; }
+  .timeline-event > article { padding: 16px; }
+  .timeline-event > article > header,
+  .timeline-event footer { align-items: flex-start; flex-direction: column; }
+  .timeline-statuses { justify-content: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workflow-step > button:hover { transform: none; }
+  .clarification-form > footer button:hover:not(:disabled) { transform: none; }
+}
+
+/* Invention section workspace */
+.invention-workspace { margin-top: 30px; display: grid; grid-template-columns: 260px minmax(0, 1fr); align-items: start; gap: clamp(22px, 3vw, 38px); }
+.workspace-index { max-height: calc(100vh - 92px); padding: 16px 12px; position: sticky; top: 80px; overflow-y: auto; border: 1px solid rgba(56,189,248,.16); border-radius: 14px; background: linear-gradient(160deg, rgba(13,27,46,.93), rgba(5,11,24,.88)); box-shadow: 0 20px 55px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.025); scrollbar-width: thin; scrollbar-color: rgba(56,189,248,.25) transparent; }
+.workspace-index > header { padding: 4px 6px 15px; display: grid; grid-template-columns: 1fr auto; gap: 8px; border-bottom: 1px solid rgba(56,189,248,.11); }
+.workspace-index > header > span { color: #67e8f9; font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+.workspace-index > header > strong { color: #cbd5e1; font-size: 11px; font-weight: 700; }
+.workspace-index > header > i { height: 3px; grid-column: 1 / -1; display: block; overflow: hidden; border-radius: 99px; background: rgba(56,189,248,.11); }
+.workspace-index > header > i > b { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg, #10b981, #22d3ee); box-shadow: 0 0 12px rgba(34,211,238,.24); transition: width .22s ease; }
+.workspace-index nav { padding-top: 12px; display: grid; gap: 15px; }
+.workspace-index nav section { display: grid; gap: 5px; }
+.workspace-index nav h2 { margin: 0; padding: 0 8px; color: #60758e; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.workspace-index ul { margin: 0; padding: 0; display: grid; gap: 2px; list-style: none; }
+.workspace-index li button { width: 100%; min-height: 46px; padding: 7px 8px; display: grid; grid-template-columns: 25px minmax(0, 1fr); align-items: center; gap: 7px; position: relative; border: 1px solid transparent; border-radius: 9px; background: transparent; color: #94a3b8; cursor: pointer; font: inherit; text-align: left; transition: background .18s ease, border-color .18s ease, color .18s ease; }
+.workspace-index li button::before { content: ""; width: 2px; position: absolute; inset-block: 9px; left: -1px; border-radius: 99px; background: transparent; }
+.workspace-index li button:hover { border-color: rgba(56,189,248,.12); background: rgba(56,189,248,.055); color: #e5f6ff; }
+.workspace-index li button[aria-current="page"] { border-color: rgba(34,211,238,.19); background: linear-gradient(90deg, rgba(16,185,129,.12), rgba(34,211,238,.07)); color: #f8fafc; box-shadow: inset 0 1px 0 rgba(255,255,255,.025), 0 0 20px rgba(34,211,238,.04); }
+.workspace-index li button[aria-current="page"]::before { background: linear-gradient(#10b981, #22d3ee); box-shadow: 0 0 10px rgba(34,211,238,.38); }
+.workspace-index li button:focus-visible { border-color: #38bdf8; outline: 2px solid #38bdf8; outline-offset: 2px; }
+.workspace-nav-icon { width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid rgba(148,163,184,.18); border-radius: 50%; color: #7f91a6; font-size: 11px; font-weight: 800; }
+.workspace-index button[aria-current="page"] .workspace-nav-icon { border-color: rgba(34,211,238,.36); color: #67e8f9; }
+.workspace-index li button > span:last-child { min-width: 0; display: grid; gap: 1px; }
+.workspace-index li button strong { overflow: hidden; color: inherit; font-size: 13px; font-weight: 700; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-index li button small { color: #6f8197; font-size: 10px; line-height: 1.3; }
+.workspace-main { min-width: 0; }
+.workspace-mobile-selector { display: none; }
+.workspace-panel[hidden] { display: none !important; }
+.workspace-panel { min-width: 0; scroll-margin-top: 90px; border: 1px solid rgba(56,189,248,.17); border-radius: 16px; background: linear-gradient(150deg, rgba(13,27,46,.82), rgba(5,11,24,.72)); box-shadow: 0 24px 70px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.025); overflow: clip; animation: workspace-panel-enter .28s ease-out both; }
+.workspace-panel-header { padding: clamp(22px, 3vw, 32px); display: flex; align-items: flex-start; justify-content: space-between; gap: 26px; border-bottom: 1px solid rgba(56,189,248,.11); background: linear-gradient(110deg, rgba(11,61,54,.13), rgba(56,189,248,.035)); }
+.workspace-panel-header h2 { margin: 0; color: #f8fafc; font-family: Georgia, serif; font-size: clamp(28px, 3vw, 36px); font-weight: 500; letter-spacing: -.025em; line-height: 1.18; }
+.workspace-panel-header p { max-width: 68ch; margin: 8px 0 0; color: #94a3b8; font-size: 15px; line-height: 1.65; }
+.workspace-panel-header > div:last-child { flex: none; display: grid; justify-items: end; gap: 7px; }
+.workspace-panel-header > div:last-child > small { color: #718198; font-size: 12px; }
+.workspace-panel-status { padding: 6px 9px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(148,163,184,.24); border-radius: 99px; color: #aebdcd; font-size: 11px; font-weight: 800; letter-spacing: .02em; }
+.workspace-panel-status.status-completed { border-color: rgba(16,185,129,.34); background: rgba(16,185,129,.09); color: #6ee7b7; }
+.workspace-panel-status.status-action_required,
+.workspace-panel-status.status-in_progress { border-color: rgba(56,189,248,.34); background: rgba(56,189,248,.075); color: #7dd3fc; }
+.workspace-panel-status.status-outdated { border-color: rgba(245,158,11,.36); background: rgba(120,53,15,.17); color: #fde68a; }
+.workspace-panel-status.status-error { border-color: rgba(248,113,113,.36); background: rgba(127,29,29,.19); color: #fca5a5; }
+.workspace-locked-note { margin: 24px clamp(22px, 3vw, 32px) 0; padding: 14px 16px; display: flex; align-items: flex-start; gap: 11px; border: 1px solid rgba(245,158,11,.24); border-radius: 10px; background: rgba(120,53,15,.12); color: #cbd5e1; }
+.workspace-locked-note > span { width: 24px; height: 24px; display: grid; place-items: center; flex: none; border: 1px solid rgba(245,158,11,.34); border-radius: 50%; color: #fbbf24; }
+.workspace-locked-note p { margin: 0; font-size: 14px; line-height: 1.55; }
+.workspace-locked-note strong { margin-bottom: 2px; display: block; color: #fde68a; font-size: 12px; letter-spacing: .035em; text-transform: uppercase; }
+.workspace-panel-content { min-width: 0; padding: clamp(22px, 3vw, 32px); }
+.workspace-section-pagination { padding: 16px clamp(22px, 3vw, 32px); display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-top: 1px solid rgba(56,189,248,.1); background: rgba(5,11,24,.32); }
+.workspace-section-pagination button { min-width: 0; min-height: 56px; padding: 9px 12px; display: grid; justify-items: start; gap: 3px; border: 1px solid rgba(56,189,248,.14); border-radius: 9px; background: rgba(13,27,46,.55); color: #f8fafc; cursor: pointer; font: inherit; text-align: left; }
+.workspace-section-pagination button:last-child { justify-items: end; text-align: right; }
+.workspace-section-pagination button:hover { border-color: rgba(34,211,238,.4); background: rgba(34,211,238,.07); box-shadow: 0 0 18px rgba(34,211,238,.05); }
+.workspace-section-pagination button:focus-visible { border-color: #38bdf8; outline: 2px solid #38bdf8; outline-offset: 3px; }
+.workspace-section-pagination button span { color: #67e8f9; font-size: 11px; font-weight: 750; text-transform: uppercase; }
+.workspace-section-pagination button strong { max-width: 100%; overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-overview { display: grid; gap: 22px; }
+.workspace-overview-summary { padding: 22px; display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; border: 1px solid rgba(56,189,248,.15); border-radius: 12px; background: rgba(5,11,24,.43); }
+.workspace-overview-summary h3 { max-width: 32ch; margin: 0; color: #f8fafc; font-family: Georgia, serif; font-size: clamp(23px, 2.4vw, 30px); font-weight: 500; line-height: 1.25; }
+.workspace-overview-summary p { margin: 8px 0 0; color: #94a3b8; font-size: 14px; }
+.workspace-overview-status { padding: 6px 9px; flex: none; border: 1px solid rgba(56,189,248,.25); border-radius: 99px; color: #bae6fd; font-size: 12px; font-weight: 750; }
+.workspace-version-summary { margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.workspace-version-summary > div { min-width: 0; padding: 15px; border: 1px solid rgba(56,189,248,.12); border-radius: 10px; background: rgba(5,11,24,.38); }
+.workspace-version-summary dt { color: #718198; font-size: 11px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+.workspace-version-summary dd { margin: 6px 0 0; overflow-wrap: anywhere; color: #dbeafe; font-size: 14px; font-weight: 700; }
+.workspace-overview .workflow-progress-panel { margin: 0; padding: 22px; box-shadow: none; }
+.workspace-overview .workflow-progress-header { align-items: center; }
+.workspace-overview .workflow-progress-header h2 { font-size: 25px; }
+.workspace-overview .workflow-recommendation { margin-top: 0; }
+.workspace-invention-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.workspace-invention-details .invention-copy:nth-child(2),
+.workspace-invention-details .invention-copy:nth-child(3),
+.workspace-invention-details .invention-copy:nth-child(4),
+.workspace-invention-details .invention-copy:nth-child(5),
+.workspace-invention-details .prior-activity { grid-column: 1 / -1; }
+.workspace-invention-details .invention-copy,
+.workspace-invention-details .prior-activity { margin: 0; }
+.workspace-panel-content > .analysis-section,
+.workspace-panel-content > .patent-search-section,
+.workspace-panel-content > .overlap-report-section,
+.workspace-panel-content > .patent-draft-section,
+.workspace-panel-content .invention-timeline { margin: 0; }
+
+/* Shared components stay mounted; the active workspace section controls their view. */
+.workspace-panel[data-active-section="analysis"] .feature-editor { display: none; }
+.workspace-panel[data-active-section="feature-review"] .analysis-review > :not(.feature-editor):not(input[type="hidden"]) { display: none; }
+.workspace-panel[data-active-section="feature-review"] .analysis-review { padding: 0; border: 0; background: transparent; box-shadow: none; }
+.workspace-panel[data-active-section="feature-review"] .feature-editor { margin: 0; }
+.workspace-panel[data-active-section="feature-review"] .clarification-review { display: none; }
+.workspace-panel[data-active-section="patent-search"] .patent-comparison-matrix { display: none; }
+.workspace-panel[data-active-section="comparison-matrix"] .patent-search-section > :not(.patent-comparison-matrix) { display: none; }
+.workspace-panel[data-active-section="comparison-matrix"] .patent-comparison-matrix { margin: 0; }
+.workspace-panel[data-active-section="patent-draft"] .draft-export-section { display: none; }
+.workspace-panel[data-active-section="export"] .patent-draft-section > :not(.draft-export-section) { display: none; }
+.workspace-panel[data-active-section="export"] .draft-export-section { margin: 0; }
+
+@keyframes workspace-panel-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 1100px) {
+  .invention-workspace { grid-template-columns: 238px minmax(0, 1fr); gap: 20px; }
+  .workspace-index { padding-inline: 9px; }
+  .workspace-panel-content { padding-inline: 22px; }
+  .workspace-version-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .invention-workspace { grid-template-columns: minmax(0, 1fr); }
+  .workspace-index { display: none; }
+  .workspace-mobile-selector { margin-bottom: 14px; padding: 12px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, .75fr); align-items: end; gap: 12px; position: sticky; z-index: 8; top: 72px; border: 1px solid rgba(56,189,248,.19); border-radius: 12px; background: rgba(5,11,24,.92); box-shadow: 0 15px 35px rgba(0,0,0,.24); backdrop-filter: blur(16px); }
+  .workspace-current-section { min-height: 46px; padding: 7px 10px; display: grid; justify-items: start; border: 0; border-radius: 8px; background: rgba(34,211,238,.06); color: #f8fafc; cursor: pointer; font: inherit; text-align: left; }
+  .workspace-current-section span,
+  .workspace-mobile-selector label > span { color: #67e8f9; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+  .workspace-current-section strong { margin-top: 2px; font-size: 14px; }
+  .workspace-mobile-selector label { display: grid; gap: 5px; }
+  .workspace-mobile-selector select { width: 100%; min-height: 46px; padding: 0 36px 0 12px; border: 1px solid rgba(56,189,248,.25); border-radius: 8px; background: #081426; color: #f8fafc; font: inherit; font-size: 14px; color-scheme: dark; }
+  .workspace-current-section:focus-visible,
+  .workspace-mobile-selector select:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+}
+
+@media (max-width: 640px) {
+  .invention-workspace { margin-top: 22px; }
+  .workspace-mobile-selector { grid-template-columns: 1fr; top: 70px; }
+  .workspace-panel-header { align-items: flex-start; flex-direction: column; gap: 16px; }
+  .workspace-panel-header > div:last-child { justify-items: start; }
+  .workspace-panel-header h2 { font-size: 28px; }
+  .workspace-panel-content { padding: 18px; }
+  .workspace-locked-note { margin: 18px 18px 0; }
+  .workspace-section-pagination { padding: 14px 18px; }
+  .workspace-section-pagination button { min-height: 62px; }
+  .workspace-section-pagination button strong { white-space: normal; }
+  .workspace-overview-summary { align-items: flex-start; flex-direction: column; }
+  .workspace-version-summary { grid-template-columns: 1fr; }
+  .workspace-overview .workflow-progress-panel { padding: 18px; }
+  .workspace-invention-details { grid-template-columns: 1fr; }
+  .workspace-invention-details .invention-copy,
+  .workspace-invention-details .prior-activity { grid-column: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-panel { animation: none; }
+  .workspace-index li button,
+  .workspace-index > header > i > b { transition: none; }
 }

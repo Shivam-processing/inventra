@@ -11,11 +11,24 @@ function inferTechnicalField(text: string) {
   return "Mechanical and electromechanical systems";
 }
 
+function extractSpecificFeatures(title: string, problem: string, description: string) {
+  const candidates = description
+    .split(/(?:\r?\n)+|(?<=[.!?])\s+/)
+    .map((value) => value.trim())
+    .filter((value) => value.length >= 10 && value.length <= 500);
+  const unique = [...new Map(candidates.map((value) => [value.toLocaleLowerCase("en"), value])).values()];
+  if (unique.length) return unique.slice(0, 5);
+
+  const fallback = `${title.trim()}: ${problem.trim()}`.slice(0, 500).trim();
+  return fallback.length >= 10 ? [fallback] : [title.trim()].filter((value) => value.length >= 10);
+}
+
 export class MockAIProvider {
   async analyse(input: InventionAnalysisInput): Promise<InventionAnalysisResult> {
     const description = input.description.trim();
     const firstSentence = description.split(/(?<=[.!?])\s+/)[0] || description;
     const field = inferTechnicalField(`${input.title} ${description}`);
+    const keyFeatures = extractSpecificFeatures(input.title, input.problemStatement, description);
 
     return {
       analysis: {
@@ -45,12 +58,7 @@ export class MockAIProvider {
           "Alternative component arrangements and optional variants",
           "Operating limits, safety constraints, and performance measurements",
         ],
-        keyFeatures: [
-          `A ${field.toLowerCase()} arrangement configured to address the stated problem`,
-          "A primary assembly that performs the invention's central function",
-          "Cooperating components arranged within a unified structure",
-          "A defined sequence that converts an input into the intended result",
-        ],
+        keyFeatures,
       },
       clarificationQuestions: [
         "Which component or interaction is essential for the invention to work as intended?",

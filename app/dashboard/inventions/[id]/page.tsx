@@ -1,14 +1,27 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { ClarificationReview } from "@/components/clarification-review";
 import { InventionAnalysis } from "@/components/invention-analysis";
 import { InventionImages, type InventionImage } from "@/components/invention-images";
+import { InventionTimelineLoading } from "@/components/invention-timeline";
+import { InventionTimelineServer } from "@/components/invention-timeline-server";
+import { InventionWorkspace } from "@/components/invention-workspace";
+import { OverlapReportPanel, type OverlapReportRecord } from "@/components/overlap-report";
+import { PatentDraftPanel, type PatentDraftRecord } from "@/components/patent-draft";
 import { PatentSearch, type PatentSearchRecord } from "@/components/patent-search";
 import { Badge, Card } from "@/components/ui";
+import { WorkflowProgress } from "@/components/workflow-progress";
 import type { AIStatus } from "@/lib/ai/types";
+import { resolveClarificationState } from "@/lib/ai/clarification";
+import { PATENT_DRAFT_SECTION_KEYS } from "@/lib/patents/patent-draft-types";
 import type { PatentSearchResult } from "@/lib/patents/patent-search";
+import { calculateWorkflowState, type WorkflowStateInput } from "@/lib/patents/workflow-state";
+import { buildWorkspaceSectionStates, recommendedWorkspaceSection } from "@/lib/patents/invention-workspace";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
 
 const BUCKET = "invention-images";
 
@@ -25,6 +38,7 @@ type Invention = {
   ai_analysis: unknown;
   clarification_questions: unknown;
   approved_features: unknown;
+  feature_set_version: number;
 };
 
 type ImageRow = Omit<InventionImage, "signedUrl"> & {
@@ -32,9 +46,44 @@ type ImageRow = Omit<InventionImage, "signedUrl"> & {
 };
 
 type PatentSearchRow = {
+  id: string;
   status: string;
+  feature_set_version: number;
   search_terms: unknown;
   results: unknown;
+  error_message: string | null;
+};
+
+type CompletedPatentSearchRow = {
+  id: string;
+};
+
+type OverlapReportRow = {
+  id: string;
+  patent_search_id: string;
+  status: string;
+  feature_set_version: number;
+  summary: unknown;
+  feature_matches: unknown;
+  error_message: string | null;
+};
+
+type CompletedOverlapReportRow = {
+  id: string;
+};
+
+type PatentDraftRow = {
+  id: string;
+  patent_search_id: string;
+  overlap_report_id: string;
+  status: string;
+  feature_set_version: number;
+  sections: unknown;
+  original_sections: unknown;
+  provider_name: string;
+  provider_version: string;
+  version: number;
+  updated_at: string;
   error_message: string | null;
 };
 
@@ -42,10 +91,26 @@ function formatLabel(value: string) {
   return value.replaceAll("_", " ").replace(/^./, (character) => character.toUpperCase());
 }
 
+function hasCompleteDraftSections(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const sections = value as Record<string, unknown>;
+  return PATENT_DRAFT_SECTION_KEYS.every((key) => typeof sections[key] === "string" && sections[key].trim().length > 0);
+}
+
+function record(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function text(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
 export const metadata: Metadata = { title: "Invention details" };
 
 export default async function InventionDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+  const parsedId = z.string().uuid().safeParse((await params).id);
+  if (!parsedId.success) notFound();
+  const id = parsedId.data;
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getClaims();
   const userId = authData?.claims?.sub;
@@ -54,7 +119,7 @@ export default async function InventionDetailPage({ params }: { params: Promise<
 
   const { data: inventionData, error: inventionError } = await supabase
     .from("invention_cases")
-    .select("id,title,problem_statement,invention_description,development_stage,publicly_disclosed,previously_sold,previously_filed,ai_status,ai_analysis,clarification_questions,approved_features")
+    .select("id,title,problem_statement,invention_description,development_stage,publicly_disclosed,previously_sold,previously_filed,ai_status,ai_analysis,clarification_questions,approved_features,feature_set_version")
     .eq("id", id)
     .eq("user_id", userId)
     .maybeSingle();
@@ -94,10 +159,19 @@ export default async function InventionDetailPage({ params }: { params: Promise<
   const approvedFeatures = Array.isArray(invention.approved_features)
     ? invention.approved_features.filter((feature): feature is string => typeof feature === "string")
     : [];
+  const analysis = record(invention.ai_analysis);
+  const clarification = resolveClarificationState({
+    title: invention.title,
+    problemStatement: invention.problem_statement,
+    proposedSolution: text(analysis.proposedSolution),
+    noveltyDescription: text(analysis.noveltyDescription),
+    claimsDraft: text(analysis.claimsDraft) || text(analysis.preliminaryClaims),
+    approvedFeatures,
+  }, invention.clarification_questions);
   const featuresApproved = status === "APPROVED" && approvedFeatures.length > 0;
   const { data: patentSearchData, error: patentSearchError } = await supabase
     .from("patent_searches")
-    .select("status,search_terms,results,error_message")
+    .select("id,status,feature_set_version,search_terms,results,error_message")
     .eq("invention_id", invention.id)
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
@@ -105,61 +179,160 @@ export default async function InventionDetailPage({ params }: { params: Promise<
     .maybeSingle();
   const searchRow = patentSearchData as PatentSearchRow | null;
   const patentSearch: PatentSearchRecord | null = searchRow ? {
+    id: searchRow.id,
     status: searchRow.status,
+    featureSetVersion: searchRow.feature_set_version,
     searchTerms: Array.isArray(searchRow.search_terms) ? searchRow.search_terms.filter((term): term is string => typeof term === "string") : [],
     results: Array.isArray(searchRow.results) ? searchRow.results as PatentSearchResult[] : [],
     errorMessage: searchRow.error_message,
   } : null;
-  const patentSearchComplete = patentSearch?.status === "COMPLETED";
-  const progress = [
-    ["Details", true],
-    ["Images", images.length > 0],
-    ["Analysis", status === "NEEDS_REVIEW" || status === "APPROVED"],
-    ["Features", featuresApproved],
-    ["Patent Search", patentSearchComplete],
-    ["Report", false],
-    ["Draft", false],
-  ] as const;
+  const { data: completedSearchData, error: completedSearchError } = featuresApproved
+    ? await supabase
+      .from("patent_searches")
+      .select("id")
+      .eq("invention_id", invention.id)
+      .eq("user_id", userId)
+      .eq("status", "COMPLETED")
+      .eq("feature_set_version", invention.feature_set_version)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    : { data: null, error: null };
+  const completedSearch = completedSearchData as CompletedPatentSearchRow | null;
+  const { data: overlapReportData, error: overlapReportError } = await supabase
+    .from("overlap_reports")
+    .select("id,patent_search_id,status,feature_set_version,summary,feature_matches,error_message")
+    .eq("invention_id", invention.id)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const reportRow = overlapReportData as OverlapReportRow | null;
+  const overlapReport: OverlapReportRecord | null = reportRow ? {
+    status: reportRow.status,
+    featureSetVersion: reportRow.feature_set_version,
+    summary: reportRow.summary,
+    featureMatches: reportRow.feature_matches,
+    errorMessage: reportRow.error_message,
+  } : null;
+  const { data: completedOverlapData, error: completedOverlapError } = completedSearch
+    ? await supabase
+      .from("overlap_reports")
+      .select("id")
+      .eq("invention_id", invention.id)
+      .eq("patent_search_id", completedSearch.id)
+      .eq("user_id", userId)
+      .eq("status", "COMPLETED")
+      .eq("feature_set_version", invention.feature_set_version)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    : { data: null, error: null };
+  const completedOverlap = completedOverlapData as CompletedOverlapReportRow | null;
+  const currentDraftResponse = completedSearch && completedOverlap
+    ? await supabase
+      .from("patent_drafts")
+      .select("id,patent_search_id,overlap_report_id,status,feature_set_version,sections,original_sections,provider_name,provider_version,version,updated_at,error_message")
+      .eq("invention_id", invention.id)
+      .eq("patent_search_id", completedSearch.id)
+      .eq("overlap_report_id", completedOverlap.id)
+      .eq("user_id", userId)
+      .eq("feature_set_version", invention.feature_set_version)
+      .maybeSingle()
+    : { data: null, error: null };
+  const latestDraftResponse = await supabase
+    .from("patent_drafts")
+    .select("id,patent_search_id,overlap_report_id,status,feature_set_version,sections,original_sections,provider_name,provider_version,version,updated_at,error_message")
+    .eq("invention_id", invention.id)
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const patentDraftData = currentDraftResponse.data ?? latestDraftResponse.data;
+  const patentDraftError = currentDraftResponse.error ?? latestDraftResponse.error;
+  const draftRow = patentDraftData as PatentDraftRow | null;
+  const patentDraft: PatentDraftRecord | null = draftRow ? {
+    id: draftRow.id,
+    status: draftRow.status,
+    featureSetVersion: draftRow.feature_set_version,
+    sections: draftRow.sections,
+    originalSections: draftRow.original_sections,
+    providerName: draftRow.provider_name,
+    providerVersion: draftRow.provider_version,
+    version: draftRow.version,
+    updatedAt: draftRow.updated_at,
+    errorMessage: draftRow.error_message,
+  } : null;
+  const latestDraftRow = latestDraftResponse.data as PatentDraftRow | null;
+  const workflowInput: WorkflowStateInput = {
+    detailsComplete: [invention.title, invention.problem_statement, invention.invention_description, invention.development_stage].every((value) => value.trim().length > 0),
+    analysisStatus: status,
+    hasFeatureCandidates: approvedFeatures.length > 0,
+    featuresApproved,
+    approvedFeatureSetVersion: invention.feature_set_version,
+    latestSearch: searchRow ? { id: searchRow.id, status: searchRow.status, featureSetVersion: searchRow.feature_set_version } : null,
+    latestCurrentSearchId: completedSearch?.id ?? null,
+    latestOverlapReport: reportRow ? { id: reportRow.id, patentSearchId: reportRow.patent_search_id, status: reportRow.status, featureSetVersion: reportRow.feature_set_version } : null,
+    latestCurrentOverlapReportId: completedOverlap?.id ?? null,
+    latestDraft: latestDraftRow ? {
+      id: latestDraftRow.id,
+      patentSearchId: latestDraftRow.patent_search_id,
+      overlapReportId: latestDraftRow.overlap_report_id,
+      status: latestDraftRow.status,
+      featureSetVersion: latestDraftRow.feature_set_version,
+      sectionsComplete: hasCompleteDraftSections(latestDraftRow.sections),
+    } : null,
+    hasUnsavedDraftChanges: false,
+  };
+  const workflowState = calculateWorkflowState(workflowInput);
+  const workspaceSections = buildWorkspaceSectionStates({
+    workflow: workflowState,
+    analysisStatus: status,
+    imageCount: images.length,
+    hasPatentResults: Boolean(patentSearch?.status === "COMPLETED" && patentSearch.results.length > 0),
+  });
+  const defaultWorkspaceSection = recommendedWorkspaceSection(workflowState, status);
+  const analysisProvider = (process.env.AI_PROVIDER ?? "mock").toLowerCase() === "openai" ? "openai" : "mock";
+  const proposedSolution = text(analysis.proposedSolution) || invention.invention_description;
+  const noveltyDescription = text(analysis.noveltyDescription);
+  const claimsDraft = text(analysis.claimsDraft) || text(analysis.preliminaryClaims);
 
   return <DashboardShell>
+    <div className="invention-detail-page">
     <div className="invention-detail-heading">
       <Link href="/dashboard" aria-label="Back to dashboard">←</Link>
       <div><p className="eyebrow">PRIVATE INVENTION</p><h1>{invention.title}</h1><Badge tone={invention.development_stage === "concept" ? "neutral" : "success"}>{formatLabel(invention.development_stage)}</Badge></div>
     </div>
 
-    <nav className="detail-progress" aria-label="Invention progress">
-      {progress.map(([label, complete], index) => <a className={complete ? "complete" : index === progress.findIndex((item) => !item[1]) ? "current" : ""} href={index < 5 ? `#step-${label.toLowerCase().replace(" ", "-")}` : undefined} aria-disabled={index >= 5} key={label}><span>{complete ? "✓" : index + 1}</span><small>{label}</small></a>)}
-    </nav>
+    <aside className="workflow-legal-notice" role="note">
+      <span aria-hidden="true">!</span>
+      <p>Patent searches, overlap assessments, and generated drafts are preliminary automated outputs and require professional review.</p>
+    </aside>
 
-    <div className="detail-step-stack">
-      <details className="detail-step-card" id="step-details" open>
-        <summary><span>01</span><div><strong>Invention details</strong><small>Problem, description, and disclosure history</small></div><i aria-hidden="true">⌄</i></summary>
-        <div className="detail-step-content"><div className="invention-detail-grid">
-          <Card className="invention-copy"><span>PROBLEM STATEMENT</span><p>{invention.problem_statement}</p></Card>
-          <Card className="invention-copy"><span>INVENTION DESCRIPTION</span><p>{invention.invention_description}</p></Card>
-          <Card className="prior-activity"><span>PREVIOUS ACTIVITY</span><dl><div><dt>Publicly disclosed</dt><dd>{invention.publicly_disclosed ? "Yes" : "No"}</dd></div><div><dt>Previously sold</dt><dd>{invention.previously_sold ? "Yes" : "No"}</dd></div><div><dt>Previously filed</dt><dd>{invention.previously_filed ? "Yes" : "No"}</dd></div></dl></Card>
-        </div></div>
-      </details>
-
-      <details className="detail-step-card" id="step-images" open>
-        <summary><span>02</span><div><strong>Images</strong><small>{images.length ? `${images.length} uploaded image${images.length === 1 ? "" : "s"}` : "Add prototype photos or sketches"}</small></div><i aria-hidden="true">⌄</i></summary>
-        <div className="detail-step-content">{imagesError && <div className="image-action-error detail-image-error" role="alert">{imagesError}</div>}{!imageError && <InventionImages inventionId={invention.id} images={images} />}</div>
-      </details>
-
-      <details className="detail-step-card" id="step-analysis" open>
-        <summary><span>03</span><div><strong>AI analysis</strong><small>Extract, review, and refine the invention structure</small></div><i aria-hidden="true">⌄</i></summary>
-        <div className="detail-step-content"><InventionAnalysis inventionId={invention.id} status={status} aiAnalysis={invention.ai_analysis} clarificationQuestions={invention.clarification_questions} approvedFeatures={invention.approved_features} /></div>
-      </details>
-
-      <details className="detail-step-card" id="step-features" open>
-        <summary><span>04</span><div><strong>Approved features</strong><small>The reviewed feature set used by later stages</small></div><i aria-hidden="true">⌄</i></summary>
-        <div className="detail-step-content">{approvedFeatures.length ? <ul className="approved-feature-list">{approvedFeatures.map((feature, index) => <li key={`${feature}-${index}`}><span>✓</span>{feature}</li>)}</ul> : <div className="feature-empty"><span>◇</span><div><strong>No approved features yet</strong><p>Complete AI analysis and approve the extracted feature set.</p></div></div>}</div>
-      </details>
-
-      <details className="detail-step-card" id="step-patent-search" open>
-        <summary><span>05</span><div><strong>Patent search</strong><small>Find similar publications in EPO OPS</small></div><i aria-hidden="true">⌄</i></summary>
-        <div className="detail-step-content"><PatentSearch inventionId={invention.id} featuresApproved={featuresApproved} search={patentSearch} loadError={patentSearchError ? "Previous patent searches could not be loaded." : undefined} /></div>
-      </details>
+    <InventionWorkspace
+      sections={workspaceSections}
+      defaultSection={defaultWorkspaceSection}
+      completionPercentage={workflowState.completionPercentage}
+      overview={<div className="workspace-overview">
+        <section className="workspace-overview-summary"><div><span className="eyebrow">PRIVATE INVENTION</span><h3>{invention.title}</h3><p>{formatLabel(invention.development_stage)} · Feature set v{invention.feature_set_version}</p></div><span className={`workspace-overview-status status-${status.toLowerCase()}`}>{status === "APPROVED" ? "Features approved" : status === "PROCESSING" ? "Analysis in progress" : status === "FAILED" ? "Analysis error" : status === "NEEDS_REVIEW" ? "Review required" : "Analysis not started"}</span></section>
+        <WorkflowProgress compact inventionId={invention.id} input={workflowInput} initialState={workflowState} />
+        <dl className="workspace-version-summary"><div><dt>Current features</dt><dd>v{invention.feature_set_version}</dd></div><div><dt>Latest search</dt><dd>{searchRow ? `Feature set v${searchRow.feature_set_version}` : "Not created"}</dd></div><div><dt>Latest report</dt><dd>{reportRow ? `Feature set v${reportRow.feature_set_version}` : "Not created"}</dd></div><div><dt>Latest draft</dt><dd>{latestDraftRow ? `Draft v${latestDraftRow.version}` : "Not created"}</dd></div></dl>
+      </div>}
+      details={<div className="workspace-invention-details">
+        <Card className="invention-copy"><span>TITLE</span><p>{invention.title}</p></Card>
+        <Card className="invention-copy"><span>PROBLEM STATEMENT</span><p>{invention.problem_statement}</p></Card>
+        <Card className="invention-copy"><span>PROPOSED SOLUTION</span><p>{proposedSolution}</p></Card>
+        <Card className="invention-copy"><span>NOVELTY DESCRIPTION</span><p>{noveltyDescription || "No novelty description has been saved yet."}</p></Card>
+        <Card className="invention-copy"><span>CLAIMS DRAFT</span><p>{claimsDraft || "No claims draft has been saved yet."}</p></Card>
+        <Card className="prior-activity"><span>PREVIOUS ACTIVITY</span><dl><div><dt>Publicly disclosed</dt><dd>{invention.publicly_disclosed ? "Yes" : "No"}</dd></div><div><dt>Previously sold</dt><dd>{invention.previously_sold ? "Yes" : "No"}</dd></div><div><dt>Previously filed</dt><dd>{invention.previously_filed ? "Yes" : "No"}</dd></div></dl></Card>
+      </div>}
+      images={<>{imagesError && <div className="image-action-error detail-image-error" role="alert">{imagesError}</div>}{!imageError && <InventionImages inventionId={invention.id} images={images} />}</>}
+      technicalReview={<div className="workspace-technical-review"><InventionAnalysis inventionId={invention.id} status={status} aiAnalysis={invention.ai_analysis} approvedFeatures={invention.approved_features} featureSetVersion={invention.feature_set_version} providerName={analysisProvider} />{(status === "NEEDS_REVIEW" || status === "APPROVED") && <ClarificationReview inventionId={invention.id} clarification={clarification} />}</div>}
+      priorArt={<PatentSearch inventionId={invention.id} featuresApproved={featuresApproved} approvedFeatures={approvedFeatures} search={patentSearch} currentFeatureSetVersion={invention.feature_set_version} existingOverlapMatches={reportRow?.status === "COMPLETED" && reportRow.patent_search_id === searchRow?.id && reportRow.feature_set_version === searchRow.feature_set_version ? reportRow.feature_matches : null} loadError={patentSearchError ? "Previous patent searches could not be loaded." : undefined} />}
+      overlap={<OverlapReportPanel inventionId={invention.id} featuresApproved={featuresApproved} hasCompletedSearch={Boolean(completedSearch)} report={overlapReport} currentFeatureSetVersion={invention.feature_set_version} loadError={completedSearchError || overlapReportError ? "Previous overlap reports could not be loaded." : undefined} />}
+      drafting={<PatentDraftPanel key={patentDraft ? `${patentDraft.id}-${patentDraft.version}` : "empty-draft"} inventionId={invention.id} featuresApproved={featuresApproved} hasCompletedSearch={Boolean(completedSearch)} hasMatchingOverlapReport={Boolean(completedOverlap)} draft={patentDraft} currentFeatureSetVersion={invention.feature_set_version} loadError={completedOverlapError || patentDraftError ? "The patent draft could not be loaded. Apply the patent-drafts migrations if they are not installed." : undefined} />}
+      activity={<Suspense fallback={<InventionTimelineLoading />}><InventionTimelineServer inventionId={invention.id} userId={userId} /></Suspense>}
+    />
     </div>
   </DashboardShell>;
 }

@@ -6,6 +6,7 @@ import {
   approveAnalysis,
   type AnalysisActionState,
 } from "@/app/dashboard/inventions/[id]/analysis-actions";
+import { FeatureEditor } from "@/components/feature-editor";
 import type { AIStatus, InventionAnalysis } from "@/lib/ai/types";
 
 const initialState: AnalysisActionState = {};
@@ -44,10 +45,10 @@ function ActionMessage({ state }: { state: AnalysisActionState }) {
   return null;
 }
 
-function AnalyseButton({ inventionId, status }: { inventionId: string; status: AIStatus }) {
+function AnalyseButton({ inventionId, status, providerName }: { inventionId: string; status: AIStatus; providerName: "mock" | "openai" }) {
   const [state, action, pending] = useActionState(analyseInvention, initialState);
   return <div className="analysis-start">
-    <div><span className="analysis-icon" aria-hidden="true">✦</span><div><h2>{status === "FAILED" ? "Analysis needs another try" : "Structure your invention"}</h2><p>Generate a private mock analysis, clarification questions, and initial feature set from the saved description.</p></div></div>
+    <div><span className="analysis-icon" aria-hidden="true">✦</span><div><h2>{status === "FAILED" ? "Analysis needs another try" : "Structure your invention"}</h2><p>Generate a private {providerName === "mock" ? "mock " : ""}analysis, clarification questions, and initial feature set from the saved description.</p></div></div>
     <form action={action}><input type="hidden" name="invention_id" value={inventionId} /><button type="submit" disabled={pending}>{pending && <span className="auth-spinner" aria-hidden="true" />}{pending ? "Analysing invention…" : "Analyse invention"}</button></form>
     <ActionMessage state={state} />
   </div>;
@@ -57,13 +58,13 @@ function ReviewField({ label, name, value, rows = 3, hint }: { label: string; na
   return <label className="analysis-field"><span>{label}</span><textarea name={name} defaultValue={value} rows={rows} required />{hint && <small>{hint}</small>}</label>;
 }
 
-function AnalysisReview({ inventionId, analysis, questions, approvedFeatures, status }: { inventionId: string; analysis: InventionAnalysis; questions: string[]; approvedFeatures: string[]; status: AIStatus }) {
+function AnalysisReview({ inventionId, analysis, approvedFeatures, status, featureSetVersion, providerName }: { inventionId: string; analysis: InventionAnalysis; approvedFeatures: string[]; status: AIStatus; featureSetVersion: number; providerName: "mock" | "openai" }) {
   const [state, action, pending] = useActionState(approveAnalysis, initialState);
-  const features = approvedFeatures.length ? approvedFeatures : analysis.keyFeatures;
+  const features = status === "APPROVED" && approvedFeatures.length ? approvedFeatures : analysis.keyFeatures;
 
   return <form action={action} className="analysis-review">
     <input type="hidden" name="invention_id" value={inventionId} />
-    <div className="analysis-review-header"><div><span className="eyebrow">MOCK AI ANALYSIS</span><h2>Review and correct the extraction</h2><p>Every field remains editable. Use one line per item in list sections.</p></div><span className={`analysis-status status-${status.toLowerCase()}`}>{status === "APPROVED" ? "Approved" : "Needs review"}</span></div>
+    <div className="analysis-review-header"><div><span className="eyebrow">{providerName === "mock" ? "MOCK AI ANALYSIS" : "OPENAI ANALYSIS"}</span><h2>Review and correct the extraction</h2><p>Every field remains editable. Use one line per item in list sections.</p></div><span className={`analysis-status status-${status.toLowerCase()}`}>{status === "APPROVED" ? "Approved" : "Needs review"}</span></div>
 
     <div className="analysis-two-column">
       <ReviewField label="Suggested title" name="suggestedTitle" value={analysis.suggestedTitle} rows={2} />
@@ -79,20 +80,16 @@ function AnalysisReview({ inventionId, analysis, questions, approvedFeatures, st
       <ReviewField label="Unknowns" name="unknowns" value={analysis.unknowns.join("\n")} rows={6} hint="One unknown per line" />
     </div>
 
-    <ReviewField label="Clarification questions" name="clarificationQuestions" value={questions.join("\n")} rows={5} hint="Keep exactly three questions, one per line" />
-    <div className="feature-review"><ReviewField label="Initial key features" name="keyFeatures" value={features.join("\n")} rows={7} hint="These lines become the approved feature set" /></div>
-
     <ActionMessage state={state} />
-    <div className="analysis-actions"><p>{status === "APPROVED" ? "You can edit and approve again to save corrections." : "Approval saves this edited feature set for later phases."}</p><button type="submit" disabled={pending}>{pending && <span className="auth-spinner" aria-hidden="true" />}{pending ? "Approving features…" : status === "APPROVED" ? "Save approved features" : "Approve features"}</button></div>
+    <FeatureEditor initialFeatures={features} status={status} featureSetVersion={featureSetVersion} pending={pending} />
   </form>;
 }
 
-export function InventionAnalysis({ inventionId, status, aiAnalysis, clarificationQuestions, approvedFeatures }: { inventionId: string; status: AIStatus; aiAnalysis: unknown; clarificationQuestions: unknown; approvedFeatures: unknown }) {
+export function InventionAnalysis({ inventionId, status, aiAnalysis, approvedFeatures, featureSetVersion, providerName }: { inventionId: string; status: AIStatus; aiAnalysis: unknown; approvedFeatures: unknown; featureSetVersion: number; providerName: "mock" | "openai" }) {
   const analysis = normalizeAnalysis(aiAnalysis);
-  const questions = list(clarificationQuestions);
   const features = list(approvedFeatures);
 
   return <section className="analysis-section">
-    {status === "PROCESSING" ? <div className="analysis-processing" role="status"><span className="spinner" aria-hidden="true" /><div><strong>Analysing your invention</strong><p>The provider is structuring the description and preparing review questions…</p><i aria-hidden="true" /><i aria-hidden="true" /><i aria-hidden="true" /></div></div> : analysis && (status === "NEEDS_REVIEW" || status === "APPROVED") ? <AnalysisReview inventionId={inventionId} analysis={analysis} questions={questions} approvedFeatures={features} status={status} /> : <AnalyseButton inventionId={inventionId} status={status} />}
+    {status === "PROCESSING" ? <div className="analysis-processing" role="status"><span className="spinner" aria-hidden="true" /><div><strong>Analysing your invention</strong><p>The {providerName === "mock" ? "mock provider" : "analysis provider"} is structuring the description and preparing review questions…</p><i aria-hidden="true" /><i aria-hidden="true" /><i aria-hidden="true" /></div></div> : analysis && (status === "NEEDS_REVIEW" || status === "APPROVED") ? <AnalysisReview inventionId={inventionId} analysis={analysis} approvedFeatures={features} status={status} featureSetVersion={featureSetVersion} providerName={providerName} /> : <AnalyseButton inventionId={inventionId} status={status} providerName={providerName} />}
   </section>;
 }

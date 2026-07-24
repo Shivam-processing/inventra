@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "tsx --test lib/patents/workflow-state.test.ts lib/ai/clarification.test.ts lib/patents/patent-result-filter.test.ts lib/patents/feature-comparison.test.ts lib/patents/invention-timeline.test.ts lib/patents/invention-workspace.test.ts",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
     "check:epo": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local --experimental-strip-types scripts/check-epo.mjs"
@@ -14,9 +15,11 @@
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.7",
+    "docx": "^9.7.1",
     "motion": "^12.42.2",
-    "next": "16.2.10",
+    "next": "16.2.11",
     "openai": "^6.48.0",
+    "pdfkit": "^0.19.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "zod": "^4.4.3"
@@ -25,11 +28,19 @@
     "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pdfkit": "^0.17.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "16.2.11",
     "tailwindcss": "^4",
+    "tsx": "^4.23.1",
     "typescript": "^5"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.22",
+      "sharp": "0.35.3"
+    }
   }
 }

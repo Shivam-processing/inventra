@@ -1,12 +1,16 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthState = {
   error?: string;
   message?: string;
 };
+
+const emailSchema = z.string().trim().toLowerCase().email().max(320);
+const nameSchema = z.string().trim().min(1).max(120);
 
 function readCredentials(formData: FormData) {
   return {
@@ -18,7 +22,7 @@ function readCredentials(formData: FormData) {
 export async function login(_: AuthState, formData: FormData): Promise<AuthState> {
   const { email, password } = readCredentials(formData);
 
-  if (!email || !password) {
+  if (!emailSchema.safeParse(email).success || !password || password.length > 1024) {
     return { error: "Enter your email and password." };
   }
 
@@ -37,7 +41,7 @@ export async function signup(_: AuthState, formData: FormData): Promise<AuthStat
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
   const { email, password } = readCredentials(formData);
 
-  if (!full_name || !email || !password) {
+  if (!nameSchema.safeParse(full_name).success || !emailSchema.safeParse(email).success || !password) {
     return { error: "Complete all required fields." };
   }
 
@@ -47,6 +51,10 @@ export async function signup(_: AuthState, formData: FormData): Promise<AuthStat
 
   if (password !== confirmPassword) {
     return { error: "Passwords do not match." };
+  }
+
+  if (password.length > 1024) {
+    return { error: "Your password is too long." };
   }
 
   const supabase = await createClient();
@@ -61,7 +69,7 @@ export async function signup(_: AuthState, formData: FormData): Promise<AuthStat
   });
 
   if (error || !data.user) {
-    return { error: error?.message ?? "Unable to create your account." };
+    return { error: "Unable to create your account. Check the details and try again." };
   }
 
   if (!data.session) {

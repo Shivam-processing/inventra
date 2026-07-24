@@ -1,3 +1,5 @@
+import "server-only";
+
 import { EpoOpsClient } from "@/lib/patents/epo-client";
 
 type SearchInput = {
