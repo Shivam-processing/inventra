@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { MockOverlapProvider } from "@/lib/patents/mock-overlap-provider";
+import { selectLatestCompletedPatentSearch } from "@/lib/patents/feature-comparison";
 import type { OverlapPatent, OverlapSummary } from "@/lib/patents/overlap-types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -65,16 +66,24 @@ export async function generateOverlapReport(
     return { error: "Approve the extracted features before generating a report." };
   }
 
-  const { data: patentSearch, error: searchError } = await supabase
+  const { data: patentSearchRows, error: searchError } = await supabase
     .from("patent_searches")
-    .select("id,results")
+    .select("*")
     .eq("invention_id", invention.id)
     .eq("user_id", userId)
     .eq("status", "COMPLETED")
     .eq("feature_set_version", invention.feature_set_version)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: false });
+
+  const patentSearch = selectLatestCompletedPatentSearch(
+    (patentSearchRows ?? []).map((search) => ({
+      ...search,
+      featureSetVersion: search.feature_set_version,
+      completedAt: typeof search.completed_at === "string" ? search.completed_at : null,
+      createdAt: typeof search.created_at === "string" ? search.created_at : null,
+    })),
+    invention.feature_set_version,
+  );
 
   if (searchError || !patentSearch) {
     return { error: "Complete a patent search before generating a report." };

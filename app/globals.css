@@ -14,6 +14,11 @@
   --danger: #f87171;
   --shadow: 0 22px 65px rgba(0, 0, 0, .34), 0 0 30px rgba(34, 211, 238, .035);
   --radius: 16px;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-subtle: #718198;
+  --measure-readable: 72ch;
 }
 
 @theme inline {
@@ -254,6 +259,24 @@ body { overflow-x: clip; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; } *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }.product-preview, .preview-scene:hover .product-preview { transform: none !important; }
+}
+
+/* Interface language */
+.sr-only { width: 1px; height: 1px; padding: 0; position: absolute; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+html[lang="hi"] body { font-family: "Noto Sans Devanagari", "Kohinoor Devanagari", Mangal, var(--font-geist-sans), sans-serif; }
+.language-switcher { min-width: 112px; min-height: 40px; padding: 0 8px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(56,189,248,.22); border-radius: 8px; background: rgba(8,20,38,.88); color: #cfefff; }
+.language-switcher > span:not(.sr-only) { color: #22d3ee; font-size: 12px; }
+.language-switcher select { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: inherit; cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; color-scheme: dark; }
+.language-switcher:focus-within { border-color: #38bdf8; outline: 2px solid #38bdf8; outline-offset: 2px; box-shadow: 0 0 18px rgba(34,211,238,.1); }
+.language-switcher-compact { min-width: 96px; min-height: 36px; }
+.auth-topbar { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.auth-topbar .brand { color: #f8fafc; }
+.auth-topbar .brand > span { border: 1px solid rgba(34,211,238,.38); background: linear-gradient(135deg, rgba(34,211,238,.2), rgba(16,185,129,.28)); box-shadow: 0 0 24px rgba(34,211,238,.08); }
+.dashboard-topbar .language-switcher { margin-right: 2px; }
+@media (max-width: 760px) {
+  .language-switcher { width: 100%; }
+  .language-switcher-compact { width: auto; }
+  .lab-page .mobile-menu .language-switcher { margin-block: 8px; }
 }
 
 /* Futuristic patent laboratory landing page */
@@ -654,6 +677,14 @@ body { background: #050b18; color: #f8fafc; overflow-x: clip; }
 .invention-detail-page .draft-export-note { margin: 0; color: #6ee7b7; font-size: 13px; line-height: 1.5; }
 .invention-detail-page .draft-export-note.blocked { color: #fbbf8a; }
 .invention-detail-page .draft-export-section > .patent-search-message { grid-column: 1 / -1; }
+.invention-detail-page .full-report-download { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; padding-top: 16px; border-top: 1px solid rgba(56,189,248,.14); }
+.invention-detail-page .full-report-download button { min-height: 50px; padding: 0 22px; border: 1px solid rgba(34,211,238,.48); border-radius: 8px; background: linear-gradient(115deg, #0b3d36, #0e7490 52%, #22d3ee); color: #f8fafc; cursor: pointer; font-size: 14px; font-weight: 800; box-shadow: 0 0 28px rgba(34,211,238,.12); }
+.invention-detail-page .full-report-download button:hover:not(:disabled) { border-color: #67e8f9; box-shadow: 0 0 32px rgba(34,211,238,.2); transform: translateY(-1px); }
+.invention-detail-page .full-report-download button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+.invention-detail-page .full-report-download button:disabled { opacity: .46; cursor: not-allowed; box-shadow: none; }
+.invention-detail-page .full-report-message { margin: 0; font-size: 13px; line-height: 1.5; }
+.invention-detail-page .full-report-message.success { color: #6ee7b7; }
+.invention-detail-page .full-report-message.error { color: #fca5a5; }
 
 @media (max-width: 780px) {
   .invention-detail-page .detail-step-card > summary { padding: 20px; }
@@ -664,6 +695,7 @@ body { background: #050b18; color: #f8fafc; overflow-x: clip; }
   .invention-detail-page .draft-export-section { grid-template-columns: 1fr; }
   .invention-detail-page .draft-export-controls { width: 100%; }
   .invention-detail-page .draft-export-controls button { flex: 1; }
+  .invention-detail-page .full-report-download { align-items: stretch; flex-direction: column; }
   .invention-detail-page .overlap-table td::before { font-size: 13px; line-height: 1.4; }
   .invention-detail-page .patent-filter-panel > summary { min-height: 54px; padding: 14px 16px; display: flex; align-items: center; gap: 10px; color: #f8fafc; cursor: pointer; font-size: 15px; font-weight: 700; list-style: none; }
   .invention-detail-page .patent-filter-panel > summary::-webkit-details-marker { display: none; }
@@ -715,6 +747,7 @@ body { background: #050b18; color: #f8fafc; overflow-x: clip; }
   .invention-detail-page .draft-section-card header { align-items: flex-start; }
   .invention-detail-page .draft-export-controls { align-items: stretch; flex-direction: column; }
   .invention-detail-page .draft-export-controls button { width: 100%; }
+  .invention-detail-page .full-report-download button { width: 100%; }
   .invention-detail-page .feature-editor-list li { grid-template-columns: 28px minmax(0, 1fr); }
   .invention-detail-page .feature-editor-list li > div { grid-column: 2; }
   .invention-detail-page .patent-filter-form { padding: 16px; grid-template-columns: 1fr; }
@@ -1069,4 +1102,399 @@ body { background: #050b18; color: #f8fafc; overflow-x: clip; }
   .workspace-panel { animation: none; }
   .workspace-index li button,
   .workspace-index > header > i > b { transition: none; }
+}
+
+/* Browser voice input */
+.voice-recorder { padding: 18px; display: grid; gap: 16px; border: 1px solid rgba(56,189,248,.17); border-radius: 12px; background: linear-gradient(145deg, rgba(13,27,46,.75), rgba(5,11,24,.58)); box-shadow: inset 0 1px 0 rgba(255,255,255,.025); transition: border-color .2s ease, box-shadow .2s ease; }
+.voice-recorder-active { border-color: rgba(34,211,238,.42); box-shadow: 0 0 28px rgba(34,211,238,.08), inset 0 1px 0 rgba(255,255,255,.035); }
+.voice-recorder-heading { display: flex; align-items: flex-start; gap: 12px; }
+.voice-recorder-icon { width: 36px; height: 36px; display: grid; place-items: center; flex: none; border: 1px solid rgba(34,211,238,.25); border-radius: 10px; background: rgba(34,211,238,.08); color: #67e8f9; font-size: 15px; }
+.voice-recorder-heading > div { min-width: 0; flex: 1; }
+.voice-recorder-heading h3 { margin: 0; color: #f8fafc; font-size: 16px; line-height: 1.4; }
+.voice-recorder-heading p { margin: 4px 0 0; color: #94a3b8; font-size: 13px; line-height: 1.55; }
+.voice-listening-status { padding: 5px 8px; display: inline-flex; align-items: center; gap: 7px; flex: none; border: 1px solid rgba(16,185,129,.32); border-radius: 99px; background: rgba(16,185,129,.09); color: #6ee7b7; font-size: 11px; font-weight: 750; }
+.voice-listening-status i { width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 9px rgba(16,185,129,.8); animation: voice-pulse 1.3s ease-in-out infinite; }
+.voice-recorder-controls { display: grid; grid-template-columns: minmax(180px, .7fr) minmax(0, 1fr); align-items: end; gap: 14px; }
+.voice-recorder-controls > label { display: grid; gap: 7px; }
+.voice-recorder-controls > label > span { color: #dbeafe; font-size: 12px; font-weight: 700; }
+.voice-recorder-controls select { width: 100%; min-height: 44px; padding: 0 36px 0 12px; border: 1px solid rgba(56,189,248,.2); border-radius: 8px; background: rgba(5,11,24,.8); color: #f8fafc; font: inherit; font-size: 13px; color-scheme: dark; }
+.voice-recorder-controls > div { display: flex; justify-content: flex-end; gap: 9px; }
+.voice-recorder-controls button { min-height: 44px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(56,189,248,.24); border-radius: 8px; color: #f8fafc; cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; }
+.voice-start-button { background: linear-gradient(115deg, #0b3d36, #10b981 58%, #38bdf8); }
+.voice-start-button > span { color: #a7f3d0; font-size: 9px; }
+.voice-stop-button { background: rgba(13,27,46,.88); }
+.voice-stop-button > span { color: #7dd3fc; font-size: 9px; }
+.voice-recorder-controls button:hover:not(:disabled) { border-color: #67e8f9; box-shadow: 0 0 20px rgba(34,211,238,.1); transform: translateY(-1px); }
+.voice-recorder-controls button:focus-visible,
+.voice-recorder-controls select:focus-visible { border-color: #38bdf8; outline: 2px solid #38bdf8; outline-offset: 3px; }
+.voice-recorder-controls button:disabled,
+.voice-recorder-controls select:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.voice-wave { height: 26px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+.voice-wave i { width: 3px; height: 9px; border-radius: 99px; background: linear-gradient(#22d3ee, #10b981); box-shadow: 0 0 7px rgba(34,211,238,.25); animation: voice-wave 1s ease-in-out infinite; }
+.voice-wave i:nth-child(2), .voice-wave i:nth-child(4) { animation-delay: -.2s; }
+.voice-wave i:nth-child(3) { animation-delay: -.4s; }
+.voice-interim { padding: 12px 14px; border-left: 2px solid #22d3ee; border-radius: 0 8px 8px 0; background: rgba(34,211,238,.055); }
+.voice-interim span { color: #67e8f9; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.voice-interim p { margin: 6px 0 0; color: #dbeafe; font-size: 14px; font-style: italic; line-height: 1.6; }
+.voice-message { margin: 0; color: #94a3b8; font-size: 12px; line-height: 1.55; }
+.voice-message-error { color: #fca5a5; }
+@keyframes voice-pulse { 50% { opacity: .45; transform: scale(.72); } }
+@keyframes voice-wave { 50% { height: 24px; } }
+
+@media (max-width: 640px) {
+  .voice-recorder { padding: 16px; }
+  .voice-recorder-heading { flex-wrap: wrap; }
+  .voice-listening-status { margin-left: 48px; }
+  .voice-recorder-controls { grid-template-columns: 1fr; }
+  .voice-recorder-controls > div { display: grid; grid-template-columns: 1fr 1fr; }
+  .voice-recorder-controls button { padding-inline: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-recorder,
+  .voice-recorder-controls button { transition: none; }
+  .voice-recorder-controls button:hover:not(:disabled) { transform: none; }
+  .voice-listening-status i,
+  .voice-wave i { animation: none; }
+}
+
+/* Focused readability hierarchy */
+.dashboard-heading h1,
+.new-invention-heading h1,
+.invention-detail-page .invention-detail-heading h1 { font-size: clamp(30px, 3.2vw, 36px); line-height: 1.18; }
+.dashboard-heading p,
+.new-invention-heading div > p:last-child,
+.section-row p { max-width: 72ch; font-size: 15px; line-height: 1.65; }
+.section-row h2,
+.pipeline-heading h2,
+.workspace-panel-header h2,
+.invention-detail-page .patent-search-toolbar h2,
+.invention-detail-page .overlap-report-toolbar h2,
+.invention-detail-page .patent-draft-toolbar h2,
+.invention-timeline .timeline-heading h2 { font-size: clamp(24px, 2.4vw, 28px); line-height: 1.25; }
+.summary-grid .card,
+.project-card { padding: 24px; }
+.summary-grid strong { font-size: clamp(26px, 3vw, 32px); line-height: 1; }
+.summary-grid small,
+.summary-grid p,
+.project-note,
+.new-project-card small { font-size: 13px; line-height: 1.55; }
+.project-card h3 { margin-top: 22px; font-size: 20px; line-height: 1.4; }
+.project-card > p { max-width: 70ch; font-size: 15px; line-height: 1.65; }
+.projects-section { margin-top: 40px; }
+.project-grid { gap: 20px; }
+
+.invention-detail-page .workspace-overview,
+.invention-detail-page .patent-search-section,
+.invention-detail-page .overlap-report-section,
+.invention-detail-page .patent-draft-section { gap: 28px; }
+.invention-detail-page .workspace-panel-content { line-height: 1.65; }
+.invention-detail-page .workspace-overview-summary,
+.invention-detail-page .invention-copy,
+.invention-detail-page .prior-activity { padding: 24px; }
+.invention-detail-page .invention-copy p { max-width: 72ch; color: #c7d5e3; font-size: 16px; line-height: 1.7; }
+.invention-detail-page .invention-copy > span,
+.invention-detail-page .prior-activity > span,
+.invention-detail-page .prior-activity dt,
+.invention-detail-page .prior-activity dd { font-size: 13px; line-height: 1.5; }
+.invention-detail-page .detail-step-card > summary strong { font-size: 20px; }
+.invention-detail-page .detail-step-card > summary small { font-size: 13px; line-height: 1.45; }
+
+.invention-detail-page .patent-search-toolbar p,
+.invention-detail-page .overlap-report-toolbar p,
+.invention-detail-page .patent-draft-toolbar p { max-width: 72ch; font-size: 15px; line-height: 1.6; }
+.invention-detail-page .patent-search-toolbar button,
+.invention-detail-page .overlap-report-toolbar button,
+.invention-detail-page .draft-generation-form > button,
+.invention-detail-page .draft-save-bar > button { min-height: 46px; font-size: 14px; }
+.invention-detail-page .patent-search-notice p,
+.invention-detail-page .patent-search-empty p,
+.invention-detail-page .patent-search-loading p,
+.invention-detail-page .patent-search-message { font-size: 14px; line-height: 1.6; }
+.invention-detail-page .patent-search-notice strong,
+.invention-detail-page .patent-search-empty strong,
+.invention-detail-page .patent-search-loading strong { font-size: 16px; line-height: 1.45; }
+.invention-detail-page .patent-result-list { gap: 20px; }
+.invention-detail-page .patent-result-list > li { padding: 24px; gap: 24px; }
+.invention-detail-page .patent-result-number strong { font-size: 12px; line-height: 1.5; }
+.invention-detail-page .patent-result-copy h3 { max-width: 65ch; font-size: 21px; line-height: 1.4; }
+.invention-detail-page .patent-result-copy dl { margin-top: 14px; gap: 10px 26px; }
+.invention-detail-page .patent-result-copy dl div { font-size: 13px; line-height: 1.5; }
+.invention-detail-page .patent-result-copy > p { max-width: 72ch; color: #b5c5d5; font-size: 15px; line-height: 1.7; -webkit-line-clamp: 4; }
+.invention-detail-page .patent-abstract-toggle,
+.invention-detail-page .patent-result-copy > a { font-size: 14px; line-height: 1.5; }
+.invention-detail-page .patent-result-copy > a small { font-size: 12px; }
+
+.invention-detail-page .overlap-summary { padding: 26px; }
+.invention-detail-page .overlap-summary > div strong { font-size: 28px; }
+.invention-detail-page .overlap-summary dd { font-size: 22px; }
+.invention-detail-page .overlap-explanation { min-width: 0; }
+.invention-detail-page .overlap-explanation > summary { width: fit-content; color: #67e8f9; cursor: pointer; font-size: 14px; font-weight: 700; list-style-position: inside; }
+.invention-detail-page .overlap-explanation > summary:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+.invention-detail-page .overlap-explanation > p { max-width: 70ch; margin: 10px 0 0; color: #b8c7d8; font-size: 15px; line-height: 1.7; }
+.invention-detail-page .overlap-report-section { width: 100%; max-width: 1250px; }
+.invention-detail-page .overlap-summary { align-items: flex-start; }
+.invention-detail-page .overlap-summary > div small { max-width: 42ch; color: #94a3b8; font-size: 13px; line-height: 1.5; }
+.invention-detail-page .overlap-summary dl { grid-template-columns: repeat(5, minmax(90px, 1fr)); }
+.invention-detail-page .overlap-score-note { max-width: 75ch; margin: -12px 0 0; color: #94a3b8; font-size: 14px; line-height: 1.6; }
+.invention-detail-page .overlap-table th:nth-child(1) { width: 21%; }
+.invention-detail-page .overlap-table th:nth-child(2) { width: 18%; }
+.invention-detail-page .overlap-table th:nth-child(3) { width: 11%; }
+.invention-detail-page .overlap-table th:nth-child(4) { width: 25%; }
+.invention-detail-page .overlap-table th:nth-child(5) { width: 25%; }
+.invention-detail-page .overlap-table td > p { max-width: 65ch; margin: 0; color: #c7d5e3; font-size: 15px; line-height: 1.65; }
+.invention-detail-page .overlap-table td[data-label="Concept evidence"] > strong { margin: 8px 0 5px; font-size: 13px; }
+
+.invention-detail-page .draft-section-card textarea { max-width: 75ch; }
+.invention-detail-page .draft-generation-form,
+.invention-detail-page .draft-save-bar { padding: 20px; }
+.invention-detail-page .draft-meta small,
+.invention-detail-page .draft-status,
+.invention-detail-page .draft-save-bar small,
+.invention-detail-page .draft-unsaved { font-size: 13px; }
+
+.invention-timeline .timeline-heading p { max-width: 72ch; font-size: 15px; line-height: 1.65; }
+.invention-timeline .timeline-controls button,
+.invention-timeline .timeline-controls select { font-size: 14px; }
+.timeline-compact .timeline-event > article { padding: 18px 20px; }
+.timeline-compact .timeline-event h3 { font-size: 18px; }
+.timeline-event-time time,
+.timeline-event footer a { font-size: 13px; }
+
+@media (max-width: 760px) {
+  .summary-grid .card,
+  .project-card,
+  .invention-detail-page .workspace-overview-summary,
+  .invention-detail-page .patent-result-list > li,
+  .invention-detail-page .overlap-summary { padding: 20px; }
+  .invention-detail-page .patent-result-copy dl { display: grid; }
+  .invention-detail-page .patent-result-copy dl div { display: grid; gap: 3px; }
+  .invention-detail-page .overlap-summary dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .invention-detail-page .overlap-table td { font-size: 15px; }
+  .invention-detail-page .draft-section-nav { grid-template-columns: 1fr; }
+  .invention-detail-page .draft-section-card textarea { max-width: none; }
+}
+
+/* Global readable type and progressive disclosure */
+body { color: var(--text-primary); font-size: 16px; line-height: 1.65; }
+p { text-wrap: pretty; }
+button,
+.button,
+input,
+select,
+textarea { font-size: 15px; }
+button,
+.button { font-weight: 700; }
+
+.site-page .hero-copy h1 { font-size: clamp(44px, 5.4vw, 64px); line-height: 1.02; }
+.site-page .hero-copy > p,
+.site-page .section-intro p,
+.site-page .control-grid > div > p,
+.site-page .cta p { max-width: 68ch; color: var(--text-secondary); font-size: 16px; line-height: 1.7; }
+.site-page .section-intro h2,
+.site-page .control-grid h2,
+.site-page .cta h2 { font-size: clamp(28px, 3.2vw, 38px); }
+.site-page .step-card h3,
+.site-page .review-card h3 { font-size: clamp(19px, 2vw, 22px); }
+.site-page .step-card p,
+.site-page .review-card > p { color: var(--text-secondary); font-size: 15px; line-height: 1.65; }
+
+.auth-card-heading h1 { font-size: clamp(32px, 3.6vw, 40px); }
+.auth-card-heading p,
+.auth-context > p { max-width: 65ch; color: var(--text-secondary); font-size: 16px; line-height: 1.7; }
+.auth-form { gap: 20px; }
+.auth-form label,
+.form-fields label,
+.yes-no-field legend { font-size: 14px; line-height: 1.45; }
+.auth-form input,
+.form-fields input,
+.form-fields select,
+.form-fields textarea { font-size: 16px; line-height: 1.65; }
+.auth-form label small,
+.form-fields small,
+.yes-no-field > p { color: var(--text-subtle); font-size: 13px; line-height: 1.55; }
+.auth-submit,
+.form-actions > button { min-height: 48px; font-size: 15px; }
+.auth-alert,
+.form-error { font-size: 14px; line-height: 1.55; }
+
+.form-section { padding: clamp(24px, 3vw, 34px); }
+.form-section-heading h2 { font-size: clamp(24px, 2.5vw, 28px); line-height: 1.25; }
+.form-section-heading p { max-width: 68ch; color: var(--text-muted); font-size: 15px; line-height: 1.65; }
+.form-fields textarea { min-height: 150px; }
+.yes-no-field > p { min-height: auto; }
+
+.invention-detail-page .analysis-start h2,
+.invention-detail-page .analysis-review-header h2,
+.invention-detail-page .feature-editor h3 { font-size: clamp(24px, 2.3vw, 28px); line-height: 1.3; }
+.invention-detail-page .analysis-start p,
+.invention-detail-page .analysis-review-header p,
+.invention-detail-page .feature-editor header p { max-width: var(--measure-readable); color: var(--text-secondary); font-size: 15px; line-height: 1.65; }
+.invention-detail-page .analysis-field { font-size: 14px; }
+.invention-detail-page .analysis-field textarea,
+.invention-detail-page .feature-editor-list textarea { font-size: 16px; line-height: 1.7; }
+.invention-detail-page .analysis-field small,
+.invention-detail-page .feature-reapproval-note p,
+.invention-detail-page .feature-version-summary p,
+.invention-detail-page .downstream-version-note p { font-size: 13px; line-height: 1.55; }
+.invention-detail-page .feature-editor-list button,
+.invention-detail-page .feature-editor-controls button,
+.invention-detail-page .feature-cancel,
+.invention-detail-page .feature-save,
+.invention-detail-page .feature-editor .feature-approve { min-height: 40px; font-size: 14px; }
+
+.clarification-list > li { padding: 0; display: block; overflow: hidden; }
+.clarification-item > summary { padding: clamp(18px, 2.4vw, 24px); display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; cursor: pointer; list-style: none; }
+.clarification-item > summary::-webkit-details-marker { display: none; }
+.clarification-item > summary:focus-visible { outline: 2px solid #38bdf8; outline-offset: -4px; }
+.clarification-item[open] > summary { border-bottom: 1px solid rgba(56,189,248,.12); background: rgba(34,211,238,.035); }
+.clarification-resolution { padding: 5px 8px; border: 1px solid rgba(245,158,11,.3); border-radius: 99px; color: #fde68a; font-size: 12px; font-weight: 750; white-space: nowrap; }
+.clarification-resolution.resolved { border-color: rgba(16,185,129,.3); background: rgba(16,185,129,.07); color: #6ee7b7; }
+.clarification-answer { padding: clamp(18px, 2.4vw, 24px); display: grid; gap: 16px; }
+.clarification-answer > label:not(.clarification-skip) { display: grid; gap: 8px; color: #dbeafe; font-size: 14px; font-weight: 700; }
+
+.invention-detail-page .draft-section-nav button { width: 100%; padding: 11px 9px; display: flex; align-items: center; gap: 9px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--text-muted); cursor: pointer; font: inherit; font-size: 14px; line-height: 1.4; text-align: left; }
+.invention-detail-page .draft-section-nav button:hover,
+.invention-detail-page .draft-section-nav button.active { border-color: rgba(34,211,238,.16); background: rgba(34,211,238,.07); color: var(--text-primary); }
+.invention-detail-page .draft-section-nav button.active { box-shadow: inset 3px 0 #22d3ee; }
+.invention-detail-page .draft-section-nav button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+.invention-detail-page .draft-section-nav button small { color: #22d3ee; font-size: 13px; }
+.invention-detail-page .draft-section-card.active { padding: clamp(22px, 3vw, 30px); }
+.invention-detail-page .draft-section-card h3 { font-size: clamp(20px, 2vw, 23px); }
+.invention-detail-page .draft-section-card textarea { min-height: 280px; padding: 18px; color: #eef6ff; font-size: 16px; line-height: 1.7; }
+.invention-detail-page .draft-section-card header button { min-height: 38px; font-size: 14px; }
+
+.state-card,
+.route-state { font-size: 15px; line-height: 1.65; }
+.state-card strong,
+.route-state strong { font-size: 18px; line-height: 1.4; }
+.state-card p,
+.route-state p { max-width: 65ch; color: var(--text-secondary); }
+
+@media (max-width: 640px) {
+  body { font-size: 15.5px; }
+  .site-page .hero-copy h1 { font-size: clamp(42px, 13vw, 54px); }
+  .auth-card { padding-inline: 22px; }
+  .form-section { padding: 22px 18px; }
+  .clarification-item > summary { grid-template-columns: 1fr; }
+  .clarification-resolution { width: fit-content; margin-left: 46px; }
+  .invention-detail-page .draft-section-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .invention-detail-page .draft-section-card textarea { min-height: 240px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clarification-item,
+  .invention-detail-page .draft-section-nav button { transition: none; }
+}
+
+/* Existing invention details editor */
+.invention-details-summary,
+.invention-details-edit { display: grid; gap: 22px; }
+.invention-details-actions { display: flex; justify-content: flex-end; }
+.invention-details-actions button,
+.details-edit-actions button { min-height: 46px; padding: 0 17px; border: 1px solid rgba(56,189,248,.28); border-radius: 8px; background: rgba(13,27,46,.88); color: #bae6fd; cursor: pointer; font: inherit; font-size: 14px; font-weight: 750; }
+.invention-details-actions button { border-color: rgba(16,185,129,.42); background: linear-gradient(115deg, #0b3d36, #10b981 62%, #38bdf8); color: #f8fafc; }
+.invention-details-actions button:hover,
+.details-edit-actions button:hover:not(:disabled) { border-color: #67e8f9; box-shadow: 0 0 22px rgba(34,211,238,.1); transform: translateY(-1px); }
+.invention-details-actions button:focus-visible,
+.details-edit-actions button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+.invention-details-edit { padding: clamp(22px, 3vw, 30px); border: 1px solid rgba(56,189,248,.18); border-radius: 13px; background: linear-gradient(145deg, rgba(13,27,46,.8), rgba(5,11,24,.66)); }
+.invention-details-edit > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.invention-details-edit > header h3 { margin: 6px 0 0; color: #f8fafc; font-family: Georgia, serif; font-size: clamp(24px, 2.4vw, 28px); font-weight: 500; }
+.invention-details-edit > header p { max-width: 68ch; margin: 6px 0 0; color: #94a3b8; font-size: 15px; line-height: 1.65; }
+.details-unsaved { padding: 6px 9px; flex: none; border: 1px solid rgba(56,189,248,.32); border-radius: 99px; background: rgba(34,211,238,.07); color: #7dd3fc; font-size: 13px; font-weight: 750; }
+.invention-details-edit .form-fields { margin-top: 0; }
+.invention-details-edit .disclosure-grid { margin-top: 0; }
+.details-review-warning { padding: 15px 16px; display: flex; align-items: flex-start; gap: 11px; border: 1px solid rgba(245,158,11,.28); border-radius: 10px; background: rgba(120,53,15,.13); }
+.details-review-warning > span { width: 24px; height: 24px; display: grid; place-items: center; flex: none; border-radius: 50%; background: rgba(245,158,11,.13); color: #fbbf24; font-weight: 800; }
+.details-review-warning p { max-width: 75ch; margin: 0; color: #fde7b0; font-size: 14px; line-height: 1.65; }
+.details-edit-actions { padding-top: 18px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(56,189,248,.12); }
+.details-edit-actions button:last-child { min-width: 150px; border-color: rgba(16,185,129,.42); background: linear-gradient(115deg, #0b3d36, #10b981 58%, #38bdf8); color: #f8fafc; }
+.details-edit-actions button:disabled { opacity: .48; cursor: not-allowed; transform: none; }
+
+@media (max-width: 640px) {
+  .invention-details-actions button { width: 100%; }
+  .invention-details-edit { padding: 18px; }
+  .invention-details-edit > header { align-items: stretch; flex-direction: column; }
+  .details-unsaved { width: fit-content; }
+  .details-edit-actions { align-items: stretch; flex-direction: column-reverse; }
+  .details-edit-actions button { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invention-details-actions button,
+  .details-edit-actions button { transition: none; }
+  .invention-details-actions button:hover,
+  .details-edit-actions button:hover:not(:disabled) { transform: none; }
+}
+
+/* Working dashboard actions and invention deletion */
+.project-card-actions { margin-top: 18px; padding-top: 16px; position: relative; z-index: 1; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; border-top: 1px solid rgba(56,189,248,.12); }
+.project-card-actions > a,
+.delete-invention-trigger.compact { min-height: 40px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(56,189,248,.2); border-radius: 7px; background: rgba(8,20,38,.72); color: #bae6fd; cursor: pointer; font: inherit; font-size: 13px; font-weight: 750; }
+.project-card-actions > .project-continue { border-color: rgba(16,185,129,.38); background: linear-gradient(115deg, #0b3d36, rgba(16,185,129,.82)); color: #f8fafc; }
+.delete-invention-trigger.compact { color: #fca5a5; }
+.project-card-actions > a:hover,
+.delete-invention-trigger:hover { border-color: #67e8f9; box-shadow: 0 0 18px rgba(34,211,238,.08); }
+.project-card-actions > a:focus-visible,
+.delete-invention-trigger:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+.inventions-index { margin-top: 38px; }
+
+.invention-danger-zone { padding: 20px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border: 1px solid rgba(248,113,113,.23); border-radius: 11px; background: rgba(127,29,29,.09); }
+.invention-danger-zone h3 { margin: 5px 0 0; color: #f8fafc; font-size: 19px; }
+.invention-danger-zone p { max-width: 65ch; margin: 5px 0 0; color: #aebdcd; font-size: 14px; line-height: 1.6; }
+.delete-invention-trigger { min-height: 44px; padding: 0 15px; flex: none; border: 1px solid rgba(248,113,113,.38); border-radius: 8px; background: rgba(127,29,29,.24); color: #fecaca; cursor: pointer; font: inherit; font-size: 14px; font-weight: 750; }
+
+.delete-invention-dialog { width: min(520px, calc(100% - 32px)); padding: 0; border: 1px solid rgba(248,113,113,.28); border-radius: 14px; background: #0d1b2e; color: #f8fafc; box-shadow: 0 30px 90px rgba(0,0,0,.58); }
+.delete-invention-dialog::backdrop { background: rgba(2,6,18,.78); backdrop-filter: blur(5px); }
+.delete-invention-dialog form { padding: clamp(22px, 4vw, 30px); display: grid; gap: 20px; }
+.delete-invention-dialog header { display: flex; align-items: center; gap: 13px; }
+.delete-invention-dialog header > span { width: 40px; height: 40px; display: grid; place-items: center; flex: none; border-radius: 50%; background: rgba(248,113,113,.13); color: #fca5a5; font-size: 18px; font-weight: 800; }
+.delete-invention-dialog h2 { margin: 4px 0 0; font-family: Georgia, serif; font-size: 26px; font-weight: 500; }
+.delete-invention-dialog form > p { margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.7; }
+.delete-invention-dialog label { display: grid; gap: 9px; color: #dbeafe; font-size: 14px; line-height: 1.5; }
+.delete-invention-dialog label strong { color: #f8fafc; }
+.delete-invention-dialog input { width: 100%; min-height: 46px; padding: 0 12px; border: 1px solid rgba(248,113,113,.25); border-radius: 8px; background: #050b18; color: #f8fafc; font: inherit; font-size: 15px; }
+.delete-invention-dialog input:focus-visible { border-color: #f87171; outline: 2px solid #f87171; outline-offset: 2px; }
+.delete-invention-error { padding: 11px 13px; border: 1px solid rgba(248,113,113,.25); border-radius: 8px; background: rgba(127,29,29,.22); color: #fecaca; font-size: 14px; line-height: 1.55; }
+.delete-invention-dialog footer { padding-top: 16px; display: flex; justify-content: flex-end; gap: 9px; border-top: 1px solid rgba(56,189,248,.12); }
+.delete-invention-dialog footer button { min-height: 44px; padding: 0 15px; border: 1px solid rgba(56,189,248,.2); border-radius: 8px; background: rgba(8,20,38,.82); color: #dbeafe; cursor: pointer; font: inherit; font-size: 14px; font-weight: 750; }
+.delete-invention-dialog footer button:last-child { border-color: rgba(248,113,113,.4); background: #991b1b; color: #fff; }
+.delete-invention-dialog footer button:disabled { opacity: .45; cursor: not-allowed; }
+.delete-invention-dialog footer button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+
+@media (max-width: 640px) {
+  .project-card-actions { grid-template-columns: 1fr 1fr; }
+  .project-card-actions > .project-continue { grid-column: 1 / -1; }
+  .invention-danger-zone { align-items: stretch; flex-direction: column; }
+  .invention-danger-zone .delete-invention-trigger { width: 100%; }
+  .delete-invention-dialog footer { align-items: stretch; flex-direction: column-reverse; }
+  .delete-invention-dialog footer button { width: 100%; }
+}
+
+/* New-invention creation handoff */
+.creation-progress { width: min(850px, 100%); margin: 0 auto 22px; padding: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; border: 1px solid rgba(56,189,248,.16); border-radius: 11px; background: rgba(5,11,24,.45); list-style: none; }
+.creation-progress li { min-width: 0; padding: 9px 10px; display: flex; align-items: center; gap: 9px; border-radius: 8px; color: #718198; }
+.creation-progress li span { width: 28px; height: 28px; display: grid; place-items: center; flex: none; border: 1px solid rgba(56,189,248,.18); border-radius: 50%; font-size: 12px; font-weight: 800; }
+.creation-progress li strong { font-size: 13px; line-height: 1.4; }
+.creation-progress li[aria-current="step"] { background: rgba(34,211,238,.07); color: #f8fafc; }
+.creation-progress li[aria-current="step"] span { border-color: rgba(16,185,129,.45); background: #0b3d36; color: #6ee7b7; box-shadow: 0 0 16px rgba(16,185,129,.1); }
+.field-validation-error { color: #fca5a5 !important; font-size: 13px !important; font-weight: 650 !important; line-height: 1.5 !important; }
+.creation-image-handoff { margin-bottom: 24px; padding: 17px 18px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border: 1px solid rgba(16,185,129,.28); border-radius: 11px; background: rgba(16,185,129,.07); }
+.creation-image-handoff > div { display: flex; align-items: center; gap: 11px; }
+.creation-image-handoff > div:first-child > span { width: 30px; height: 30px; display: grid; place-items: center; flex: none; border-radius: 50%; background: rgba(16,185,129,.14); color: #6ee7b7; font-weight: 800; }
+.creation-image-handoff p { max-width: 65ch; margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.6; }
+.creation-image-handoff p strong { color: #f8fafc; }
+.creation-image-handoff button,
+.creation-image-handoff a { min-height: 42px; padding: 0 13px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(56,189,248,.23); border-radius: 8px; background: rgba(8,20,38,.78); color: #bae6fd; cursor: pointer; font: inherit; font-size: 13px; font-weight: 750; white-space: nowrap; }
+.creation-image-handoff button { border-color: rgba(16,185,129,.42); background: linear-gradient(115deg, #0b3d36, #10b981 62%, #38bdf8); color: #f8fafc; }
+.creation-image-handoff button:focus-visible,
+.creation-image-handoff a:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+
+@media (max-width: 760px) {
+  .creation-progress { grid-template-columns: 1fr; }
+  .creation-image-handoff { align-items: stretch; flex-direction: column; }
+  .creation-image-handoff > div:last-child { display: grid; grid-template-columns: 1fr; }
+  .creation-image-handoff button,
+  .creation-image-handoff a { width: 100%; white-space: normal; text-align: center; }
 }

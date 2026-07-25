@@ -36,21 +36,30 @@ const ACTION_SECTIONS: Record<keyof typeof ACTION_LABELS, WorkspaceSectionId> = 
   "#step-draft": "patent-draft",
 };
 
-function formatTimestamp(value: string | null) {
-  if (!value) return "Timestamp unavailable";
+const timelineTimestampFormatter = new Intl.DateTimeFormat("en-IN", {
+  timeZone: "Asia/Kolkata",
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+
+export function formatTimelineTimestamp(value: string | null) {
+  if (!value) return "Date unavailable";
   try {
-    return new Intl.DateTimeFormat(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(value));
+    const date = new Date(value);
+    if (Number.isNaN(date.valueOf())) return "Date unavailable";
+    return timelineTimestampFormatter.format(date);
   } catch {
-    return "Timestamp unavailable";
+    return "Date unavailable";
   }
+}
+
+function validTimestamp(value: string | null) {
+  return value && !Number.isNaN(Date.parse(value)) ? value : undefined;
 }
 
 function TimelineEvent({ event, compact }: { event: InventionTimelineEvent; compact: boolean }) {
   return <li className={`timeline-event timeline-event-${event.outcome.toLowerCase()} timeline-state-${event.recordState.toLowerCase()}`}>
-    <div className="timeline-event-time"><time dateTime={event.timestamp ?? undefined}>{formatTimestamp(event.timestamp)}</time></div>
+    <div className="timeline-event-time"><time dateTime={validTimestamp(event.timestamp)}>{formatTimelineTimestamp(event.timestamp)}</time></div>
     <span className="timeline-event-marker" aria-hidden="true" />
     <article>
       <header><div><span className="timeline-category">{CATEGORY_LABELS[event.category]}</span><h3>{event.title}</h3></div><div className="timeline-statuses"><span>{OUTCOME_LABELS[event.outcome]}</span><span>{STATE_LABELS[event.recordState]}</span></div></header>
@@ -69,7 +78,7 @@ function TimelineEvent({ event, compact }: { event: InventionTimelineEvent; comp
 export function InventionTimeline({ events, loadError }: { events: InventionTimelineEvent[]; loadError?: string }) {
   const [filter, setFilter] = useState<TimelineFilter>("ALL");
   const [sort, setSort] = useState<TimelineSort>("newest");
-  const [compact, setCompact] = useState(false);
+  const [compact, setCompact] = useState(true);
   const visibleEvents = useMemo(
     () => sortTimelineEvents(filterTimelineEvents(events, filter), sort),
     [events, filter, sort],

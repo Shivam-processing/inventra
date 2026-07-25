@@ -5,9 +5,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { formatEpoOpsError } from "@/lib/patents/epo-client";
 import {
-  buildPatentSearchTerms,
   searchEpoPatents,
 } from "@/lib/patents/patent-search";
+import { buildPatentSearchPlan, patentSearchTerms } from "@/lib/patents/patent-search-relevance";
 import { createClient } from "@/lib/supabase/server";
 
 export type PatentSearchActionState = { error?: string; message?: string };
@@ -26,6 +26,12 @@ function technicalField(value: unknown): string {
   return typeof field === "string" ? field : "";
 }
 
+function analysisText(value: unknown, key: string): string {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "";
+  const field = (value as Record<string, unknown>)[key];
+  return typeof field === "string" ? field : "";
+}
+
 export async function searchSimilarPatents(
   _: PatentSearchActionState,
   formData: FormData,
@@ -40,7 +46,7 @@ export async function searchSimilarPatents(
 
   const { data: invention, error: inventionError } = await supabase
     .from("invention_cases")
-    .select("id,title,ai_status,ai_analysis,approved_features,feature_set_version")
+    .select("id,title,problem_statement,invention_description,ai_status,ai_analysis,approved_features,feature_set_version")
     .eq("id", parsedId.data)
     .eq("user_id", userId)
     .maybeSingle();
@@ -52,15 +58,19 @@ export async function searchSimilarPatents(
     return { error: "Approve the extracted features before searching patents." };
   }
 
-  const searchTerms = buildPatentSearchTerms({
+  const searchPlan = buildPatentSearchPlan({
     title: invention.title,
+    problemStatement: invention.problem_statement,
+    proposedSolution: analysisText(invention.ai_analysis, "proposedSolution") || invention.invention_description,
     technicalField: technicalField(invention.ai_analysis),
     approvedFeatures,
   });
 
-  if (!searchTerms.length) {
-    return { error: "The approved features need more specific technical terms." };
+  if (!searchPlan.strictQuery) {
+    return { error: "The invention needs a specific domain and at least one approved technical mechanism before searching." };
   }
+
+  const initialSearchTerms = patentSearchTerms(searchPlan, "strict");
 
   const { data: activeSearch, error: activeSearchError } = await supabase
     .from("patent_searches")
@@ -79,7 +89,7 @@ export async function searchSimilarPatents(
     .insert({
       invention_id: invention.id,
       user_id: userId,
-      search_terms: searchTerms,
+      search_terms: initialSearchTerms,
       feature_set_version: invention.feature_set_version,
       status: "PROCESSING",
       results: [],
@@ -94,10 +104,10 @@ export async function searchSimilarPatents(
   }
 
   try {
-    const results = await searchEpoPatents(searchTerms);
+    const execution = await searchEpoPatents(searchPlan);
     const { error: saveError } = await supabase
       .from("patent_searches")
-      .update({ status: "COMPLETED", results, error_message: null })
+      .update({ status: "COMPLETED", results: execution.results, search_terms: execution.searchTerms, error_message: null })
       .eq("id", searchRecord.id)
       .eq("invention_id", invention.id)
       .eq("user_id", userId);
@@ -109,9 +119,9 @@ export async function searchSimilarPatents(
 
     revalidatePath(`/dashboard/inventions/${invention.id}`);
     return {
-      message: results.length
-        ? `${results.length} similar patent${results.length === 1 ? "" : "s"} found.`
-        : "The search completed with no matching patents.",
+      message: execution.results.length
+        ? `${execution.results.length} relevant patent${execution.results.length === 1 ? "" : "s"} found.`
+        : "No sufficiently relevant prior-art results were found using the current search terms. Refine the approved features and try again.",
     };
   } catch (error) {
     const safeError = formatEpoOpsError(error);

@@ -3,7 +3,9 @@
 import { useMemo, useState } from "react";
 import {
   buildPatentComparisonMatrix,
+  defaultPatentSelection,
   isPatentComparisonStale,
+  reconcilePatentSelection,
   updatePatentSelection,
 } from "@/lib/patents/feature-comparison";
 import type { FeatureOverlapMatch, OverlapMatchType } from "@/lib/patents/overlap-types";
@@ -15,6 +17,7 @@ type CompletedSearch = {
   status: string;
   featureSetVersion: number;
   results: PatentSearchResult[];
+  completedAt: string | null;
 };
 
 type PatentOption = {
@@ -48,6 +51,8 @@ function parseExistingMatches(value: unknown): FeatureOverlapMatch[] {
       matchedKeywords: Array.isArray(source.matchedKeywords)
         ? source.matchedKeywords.filter((word): word is string => typeof word === "string")
         : [],
+      matchedConcepts: Array.isArray(source.matchedConcepts) ? source.matchedConcepts.filter((word): word is string => typeof word === "string") : [],
+      missingConcepts: Array.isArray(source.missingConcepts) ? source.missingConcepts.filter((word): word is string => typeof word === "string") : [],
       explanation: source.explanation,
     }];
   });
@@ -134,47 +139,75 @@ function MatrixCards({
   </div>;
 }
 
-export function PatentComparisonMatrix({
-  features,
-  featuresApproved,
-  currentFeatureSetVersion,
-  search,
-  loading,
-  existingOverlapMatches,
-}: {
+type PatentComparisonMatrixProps = {
   features: string[];
   featuresApproved: boolean;
   currentFeatureSetVersion: number;
   search: CompletedSearch | null;
   loading: boolean;
   existingOverlapMatches?: unknown;
-}) {
+};
+
+function formatCompletionDate(value: string | null): string {
+  if (!value) return "Date unavailable";
+  const date = new Date(value);
+  if (Number.isNaN(date.valueOf())) return "Date unavailable";
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function PatentComparisonMatrixContent({
+  features,
+  featuresApproved,
+  currentFeatureSetVersion,
+  search,
+  loading,
+  existingOverlapMatches,
+}: PatentComparisonMatrixProps) {
   const patentOptions = useMemo<PatentOption[]>(() => search?.results.map((patent, index) => ({
     id: `${patent.sourceId}:${patent.publicationNumber}:${index}`,
     patent,
   })) ?? [], [search]);
-  const [selectedIds, setSelectedIds] = useState(() => patentOptions.slice(0, 3).map((option) => option.id));
+  const [selectedIds, setSelectedIds] = useState(() => defaultPatentSelection(
+    patentOptions.map((option) => ({ id: option.id, relevanceScore: option.patent.relevanceScore })),
+  ));
   const [selectionError, setSelectionError] = useState<string | null>(null);
-  const selectedOptions = patentOptions.filter((option) => selectedIds.includes(option.id));
+  const reconciledSelection = useMemo(() => reconcilePatentSelection(
+    selectedIds,
+    patentOptions.map((option) => ({ id: option.id, relevanceScore: option.patent.relevanceScore })),
+    false,
+  ), [patentOptions, selectedIds]);
+  const currentSelectedIds = reconciledSelection.selection;
+  const selectedOptions = useMemo(
+    () => patentOptions.filter((option) => currentSelectedIds.includes(option.id)),
+    [currentSelectedIds, patentOptions],
+  );
   const approvedFeatures = useMemo(() => featuresApproved ? features : [], [features, featuresApproved]);
   const stale = Boolean(search && isPatentComparisonStale(search.featureSetVersion, currentFeatureSetVersion));
+  const parsedMatches = useMemo(() => parseExistingMatches(existingOverlapMatches), [existingOverlapMatches]);
+  const currentPublicationNumbers = useMemo(() => new Set(patentOptions.map((option) => option.patent.publicationNumber.trim().toLocaleUpperCase("en"))), [patentOptions]);
+  const excludedForeignMatch = parsedMatches.some((match) => match.publicationNumber && !currentPublicationNumbers.has(match.publicationNumber.trim().toLocaleUpperCase("en")));
+  const excludedStaleData = reconciledSelection.removedMissing || excludedForeignMatch;
   const comparison = useMemo(() => {
     try {
       return {
         matrix: buildPatentComparisonMatrix(
           approvedFeatures,
           selectedOptions.map((option) => option.patent),
-          parseExistingMatches(existingOverlapMatches),
+          parsedMatches,
         ),
         error: null,
       };
     } catch {
       return { matrix: null, error: "The patent comparison matrix could not be calculated. Please retry." };
     }
-  }, [approvedFeatures, existingOverlapMatches, selectedOptions]);
+  }, [approvedFeatures, parsedMatches, selectedOptions]);
 
   function togglePatent(option: PatentOption, selected: boolean) {
-    const update = updatePatentSelection(selectedIds, option.id, selected);
+    const update = updatePatentSelection(currentSelectedIds, option.id, selected);
     setSelectedIds(update.selection);
     setSelectionError(update.limitReached ? "Select no more than five patents." : null);
   }
@@ -186,6 +219,11 @@ export function PatentComparisonMatrix({
     </header>
 
     <aside className="matrix-review-note" role="note"><span aria-hidden="true">!</span><p>Feature matches are deterministic preliminary comparisons and require professional review.</p></aside>
+    {search && <div className="patent-results-count" aria-label="Comparison matrix source search">
+      <strong>Current search</strong>
+      <span>Feature set v{search.featureSetVersion} · Completed {formatCompletionDate(search.completedAt)} · {patentOptions.length} patent{patentOptions.length === 1 ? "" : "s"} available</span>
+    </div>}
+    {excludedStaleData && <div className="patent-search-message patent-search-error" role="alert">A saved patent selection or comparison entry was not present in the current search and was excluded.</div>}
     {stale && search && <div className="downstream-version-note"><span>↺</span><p><strong>Outdated patent search</strong>This search used feature set v{search.featureSetVersion}, while the current approved feature set is v{currentFeatureSetVersion}. The comparison remains readable but is not current.</p></div>}
 
     {loading && <div className="patent-search-loading" role="status"><span className="spinner" aria-hidden="true" /><div><strong>Waiting for patent results</strong><p>The comparison matrix will be available when the current search completes.</p></div></div>}
@@ -195,13 +233,13 @@ export function PatentComparisonMatrix({
 
     {!loading && approvedFeatures.length > 0 && search?.status === "COMPLETED" && patentOptions.length > 0 && <>
       <div className="matrix-selection-toolbar">
-        <div><strong>Select patents</strong><span role="status">{selectedIds.length} of 5 selected</span></div>
-        <div><button type="button" onClick={() => { setSelectedIds(patentOptions.slice(0, 3).map((option) => option.id)); setSelectionError(null); }}>Select first 3</button><button type="button" disabled={selectedIds.length === 0} onClick={() => { setSelectedIds([]); setSelectionError(null); }}>Clear selection</button></div>
+        <div><strong>Select patents</strong><span role="status">{currentSelectedIds.length} of 5 selected</span></div>
+        <div><button type="button" onClick={() => { setSelectedIds(defaultPatentSelection(patentOptions.map((option) => ({ id: option.id, relevanceScore: option.patent.relevanceScore })))); setSelectionError(null); }}>Select first 3</button><button type="button" disabled={currentSelectedIds.length === 0} onClick={() => { setSelectedIds([]); setSelectionError(null); }}>Clear selection</button></div>
       </div>
       <div className="matrix-patent-selector" role="group" aria-label="Patents included in the comparison matrix">
         {patentOptions.map((option) => {
-          const selected = selectedIds.includes(option.id);
-          const disabled = !selected && selectedIds.length >= 5;
+          const selected = currentSelectedIds.includes(option.id);
+          const disabled = !selected && currentSelectedIds.length >= 5;
           return <label className={selected ? "selected" : ""} aria-disabled={disabled} key={option.id}>
             <input type="checkbox" checked={selected} disabled={disabled} onChange={(event) => togglePatent(option, event.target.checked)} />
             <span aria-hidden="true">✓</span>
@@ -219,4 +257,8 @@ export function PatentComparisonMatrix({
       </>}
     </>}
   </section>;
+}
+
+export function PatentComparisonMatrix(props: PatentComparisonMatrixProps) {
+  return <PatentComparisonMatrixContent key={props.search?.id ?? "no-current-search"} {...props} />;
 }

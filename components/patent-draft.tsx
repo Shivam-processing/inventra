@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import {
   generatePatentDraft,
@@ -11,6 +12,7 @@ import {
   type PatentDraftSectionKey,
   type PatentDraftSections,
 } from "@/lib/patents/patent-draft-types";
+import { FullReportDownload } from "@/components/full-report-download";
 
 export type PatentDraftRecord = {
   id: string;
@@ -141,7 +143,9 @@ function DraftExport({
         {exporting === "pdf" && <span className="auth-spinner" aria-hidden="true" />}
         {exporting === "pdf" ? "Preparing PDF…" : exportMessage?.kind === "error" && exportMessage.format === "pdf" ? "Retry PDF download" : "Download PDF"}
       </button>
+      <Link className="button button-default" href={`/dashboard/inventions/${inventionId}/cost-estimator`}>Estimate patent filing cost</Link>
     </div>
+    <FullReportDownload inventionId={inventionId} disabled={exportDisabled} />
     <p className={dirty || !draftReady ? "draft-export-note blocked" : "draft-export-note"}>{blockedReason}</p>
     {exportMessage && <div className={`patent-search-message patent-search-${exportMessage.kind}`} role={exportMessage.kind === "error" ? "alert" : "status"}>{exportMessage.kind === "success" ? "✓ " : ""}{exportMessage.text}</div>}
   </section>;
@@ -170,6 +174,7 @@ export function PatentDraftPanel({
   const originalSections = normalizeSections(draft?.originalSections);
   const [editedSections, setEditedSections] = useState<PatentDraftSections | null>(savedSections);
   const [acknowledged, setAcknowledged] = useState(false);
+  const [activeSection, setActiveSection] = useState<PatentDraftSectionKey>("title");
 
   const ready = featuresApproved && hasCompletedSearch && hasMatchingOverlapReport;
   const processing = generating || draft?.status === "PROCESSING";
@@ -217,14 +222,15 @@ export function PatentDraftPanel({
     {!processing && !draft && <div className="patent-search-empty"><span>▤</span><div><strong>No patent draft generated</strong><p>Accept the acknowledgement and generate the first editable version.</p></div></div>}
 
     {!processing && complete && draft && editedSections && originalSections && <div className="draft-editor-layout">
-      <nav className="draft-section-nav" aria-label="Draft sections"><span>DRAFT SECTIONS</span>{PATENT_DRAFT_SECTION_KEYS.map((key, index) => <a href={`#draft-${key}`} key={key}><small>{String(index + 1).padStart(2, "0")}</small>{sectionLabels[key]}</a>)}</nav>
+      <nav className="draft-section-nav" aria-label="Draft sections"><span>DRAFT SECTIONS</span>{PATENT_DRAFT_SECTION_KEYS.map((key, index) => <button type="button" className={activeSection === key ? "active" : undefined} aria-current={activeSection === key ? "page" : undefined} onClick={() => setActiveSection(key)} key={key}><small>{String(index + 1).padStart(2, "0")}</small>{sectionLabels[key]}</button>)}</nav>
       <form action={saveAction} className="draft-editor-form">
         <input type="hidden" name="invention_id" value={inventionId} />
         <input type="hidden" name="draft_id" value={draft.id} />
         <input type="hidden" name="version" value={draft.version} />
+        {PATENT_DRAFT_SECTION_KEYS.filter((key) => key !== activeSection).map((key) => <input type="hidden" name={key} value={editedSections[key]} key={key} />)}
         <div className="draft-save-bar"><div><span className={dirty ? "draft-unsaved active" : "draft-unsaved"}><i />{dirty ? "Unsaved changes" : "All changes saved"}</span><small>Last saved {savedTime(draft.updatedAt)} · {draft.providerName} {draft.providerVersion}</small></div><button type="submit" disabled={!dirty || saving || generating}>{saving && <span className="auth-spinner" aria-hidden="true" />}{saving ? "Saving changes…" : "Save changes"}</button></div>
         <ActionMessage state={saveState} />
-        <div className="draft-section-cards">{PATENT_DRAFT_SECTION_KEYS.map((key, index) => <section className="draft-section-card" id={`draft-${key}`} key={key}><header><div><span>{String(index + 1).padStart(2, "0")}</span><h3>{sectionLabels[key]}</h3></div><button type="button" onClick={() => resetSection(key)} disabled={editedSections[key] === originalSections[key] || saving}>Reset section</button></header><textarea name={key} value={editedSections[key]} onChange={(event) => updateSection(key, event.target.value)} rows={key === "title" || key === "technicalField" ? 3 : key === "preliminaryClaims" ? 12 : 8} required aria-label={sectionLabels[key]} /></section>)}</div>
+        <div className="draft-section-cards"><section className="draft-section-card active" id={`draft-${activeSection}`}><header><div><span>{String(PATENT_DRAFT_SECTION_KEYS.indexOf(activeSection) + 1).padStart(2, "0")}</span><h3>{sectionLabels[activeSection]}</h3></div><button type="button" onClick={() => resetSection(activeSection)} disabled={editedSections[activeSection] === originalSections[activeSection] || saving}>Reset section</button></header><textarea name={activeSection} value={editedSections[activeSection]} onChange={(event) => updateSection(activeSection, event.target.value)} rows={activeSection === "title" || activeSection === "technicalField" ? 3 : activeSection === "preliminaryClaims" ? 12 : 10} required aria-label={sectionLabels[activeSection]} /></section></div>
       </form>
     </div>}
     <DraftExport inventionId={inventionId} draft={draft} savedSections={savedSections} dirty={dirty} current={ready && !stale} />

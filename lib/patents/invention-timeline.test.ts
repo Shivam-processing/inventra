@@ -6,6 +6,7 @@ import {
   sortTimelineEvents,
   type InventionTimelineInput,
 } from "./invention-timeline";
+import { formatTimelineTimestamp } from "../../components/invention-timeline";
 
 const at = (day: number) => `2026-07-${String(day).padStart(2, "0")}T10:00:00.000Z`;
 
@@ -35,6 +36,23 @@ function completeInput(): InventionTimelineInput {
 }
 
 describe("buildInventionTimeline", () => {
+  it("formats timestamps identically across server time zones", () => {
+    const originalTimeZone = process.env.TZ;
+    try {
+      process.env.TZ = "UTC";
+      const utcEnvironment = formatTimelineTimestamp("2026-07-25T10:00:00.000Z");
+      process.env.TZ = "America/Los_Angeles";
+      const pacificEnvironment = formatTimelineTimestamp("2026-07-25T10:00:00.000Z");
+      assert.equal(utcEnvironment, pacificEnvironment);
+      assert.notEqual(utcEnvironment, "Date unavailable");
+      assert.equal(formatTimelineTimestamp("invalid"), "Date unavailable");
+      assert.equal(formatTimelineTimestamp(null), "Date unavailable");
+    } finally {
+      if (originalTimeZone === undefined) delete process.env.TZ;
+      else process.env.TZ = originalTimeZone;
+    }
+  });
+
   it("returns an empty workflow when no invention exists", () => {
     assert.deepEqual(buildInventionTimeline(input({ invention: null })), []);
   });

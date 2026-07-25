@@ -12,6 +12,8 @@ export type FeatureOverlapMatch = {
   publicationNumber: string | null;
   matchType: OverlapMatchType;
   matchedKeywords: string[];
+  matchedConcepts?: string[];
+  missingConcepts?: string[];
   explanation: string;
 };
 

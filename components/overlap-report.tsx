@@ -11,6 +11,7 @@ import type {
   OverlapSummary,
   OverlapSummaryType,
 } from "@/lib/patents/overlap-types";
+import { calculateOverlapRiskScore } from "@/lib/reports/full-report-utils";
 
 export type OverlapReportRecord = {
   status: string;
@@ -61,6 +62,8 @@ function matches(value: unknown): FeatureOverlapMatch[] {
       publicationNumber: typeof source.publicationNumber === "string" ? source.publicationNumber : null,
       matchType,
       matchedKeywords: Array.isArray(source.matchedKeywords) ? source.matchedKeywords.filter((word): word is string => typeof word === "string") : [],
+      matchedConcepts: Array.isArray(source.matchedConcepts) ? source.matchedConcepts.filter((word): word is string => typeof word === "string") : [],
+      missingConcepts: Array.isArray(source.missingConcepts) ? source.missingConcepts.filter((word): word is string => typeof word === "string") : [],
       explanation: source.explanation,
     }];
   });
@@ -68,13 +71,13 @@ function matches(value: unknown): FeatureOverlapMatch[] {
 
 function ComparisonTable({ featureMatches }: { featureMatches: FeatureOverlapMatch[] }) {
   return <div className="overlap-table-wrap"><table className="overlap-table">
-    <thead><tr><th>Approved feature</th><th>Closest patent</th><th>Match</th><th>Matched keywords</th><th>Assessment</th></tr></thead>
+    <thead><tr><th>Approved feature</th><th>Closest patent</th><th>Classification</th><th>Concept evidence</th><th>Assessment</th></tr></thead>
     <tbody>{featureMatches.map((match, index) => <tr key={`${match.feature}-${index}`}>
       <td data-label="Approved feature">{match.feature}</td>
       <td data-label="Closest patent"><strong>{match.matchedPatentTitle ?? "No matching patent"}</strong><small>{match.publicationNumber ?? "—"}</small></td>
       <td data-label="Match"><span className={`overlap-match overlap-${match.matchType.toLowerCase()}`}>{matchLabels[match.matchType]}</span></td>
-      <td data-label="Matched keywords"><div className="overlap-keywords">{match.matchedKeywords.length ? match.matchedKeywords.map((word) => <code key={word}>{word}</code>) : <span>None</span>}</div></td>
-      <td data-label="Assessment">{match.explanation}</td>
+      <td data-label="Concept evidence"><strong>Matched concepts</strong><div className="overlap-keywords">{(match.matchedConcepts?.length ? match.matchedConcepts : match.matchedKeywords).length ? (match.matchedConcepts?.length ? match.matchedConcepts : match.matchedKeywords).map((word) => <code key={word}>{word}</code>) : <span>None</span>}</div><strong>Missing concepts</strong><div className="overlap-keywords">{match.missingConcepts?.length ? match.missingConcepts.map((word) => <code key={word}>{word}</code>) : <span>None recorded</span>}</div></td>
+      <td data-label="Assessment"><p>{match.explanation}</p><details className="overlap-explanation"><summary>View details</summary><p>Meaningful evidence: {match.matchedKeywords.length ? match.matchedKeywords.join(", ") : "none identified"}.</p></details></td>
     </tr>)}</tbody>
   </table></div>;
 }
@@ -85,6 +88,7 @@ export function OverlapReportPanel({
   hasCompletedSearch,
   report,
   currentFeatureSetVersion,
+  currentSearch,
   loadError,
 }: {
   inventionId: string;
@@ -92,6 +96,7 @@ export function OverlapReportPanel({
   hasCompletedSearch: boolean;
   report: OverlapReportRecord | null;
   currentFeatureSetVersion: number;
+  currentSearch?: { featureSetVersion: number; completedAt: string | null; patentCount: number } | null;
   loadError?: string;
 }) {
   const [state, action, pending] = useActionState(generateOverlapReport, initialState);
@@ -102,6 +107,10 @@ export function OverlapReportPanel({
   const processing = pending || report?.status === "PROCESSING";
   const enabled = featuresApproved && hasCompletedSearch;
   const stale = Boolean(report && (!featuresApproved || report.featureSetVersion !== currentFeatureSetVersion));
+  const score = calculateOverlapRiskScore(featureMatches);
+  const completionDate = currentSearch?.completedAt && !Number.isNaN(Date.parse(currentSearch.completedAt))
+    ? new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" }).format(new Date(currentSearch.completedAt))
+    : "Date unavailable";
 
   return <section className="overlap-report-section">
     <div className="overlap-report-toolbar">
@@ -119,7 +128,7 @@ export function OverlapReportPanel({
 
     {processing && <div className="patent-search-loading" role="status"><span className="spinner" aria-hidden="true" /><div><strong>Comparing approved features</strong><p>Checking each feature against every patent title and available abstract…</p></div></div>}
 
-    {!processing && complete && reportSummary && <div className={`overlap-summary summary-${reportSummary.classification.toLowerCase()}`}><div><span>REPORT SUMMARY</span><strong>{summaryLabels[reportSummary.classification]}</strong></div><dl><div><dt>Full</dt><dd>{reportSummary.fullMatches}</dd></div><div><dt>Partial</dt><dd>{reportSummary.partialMatches}</dd></div><div><dt>Not found</dt><dd>{reportSummary.notFound}</dd></div><div><dt>Uncertain</dt><dd>{reportSummary.uncertain}</dd></div></dl></div>}
+    {!processing && complete && reportSummary && <><div className="patent-results-count"><strong>Current completed search</strong><span>Feature set v{currentSearch?.featureSetVersion ?? report.featureSetVersion} · Completed {completionDate} · {currentSearch?.patentCount ?? 0} patents reviewed · {featureMatches.length} features assessed</span></div><div className={`overlap-summary summary-${reportSummary.classification.toLowerCase()}`}><div><span>FEATURE ASSESSMENTS</span><strong>{summaryLabels[reportSummary.classification]}</strong><small>Preliminary overlap-risk score: {score}/100</small></div><dl><div><dt>Total features</dt><dd>{featureMatches.length}</dd></div><div><dt>Full</dt><dd>{reportSummary.fullMatches}</dd></div><div><dt>Partial</dt><dd>{reportSummary.partialMatches}</dd></div><div><dt>Not found</dt><dd>{reportSummary.notFound}</dd></div><div><dt>Uncertain</dt><dd>{reportSummary.uncertain}</dd></div></dl></div><p className="overlap-score-note">This score reflects deterministic textual overlap in the searched records. It is not a patentability, novelty, or legal opinion.</p></>}
     {!processing && complete && featureMatches.length > 0 && <ComparisonTable featureMatches={featureMatches} />}
     {!processing && complete && featureMatches.length === 0 && <div className="patent-search-empty"><span>≋</span><div><strong>No comparisons available</strong><p>The completed search did not contain enough patent data for a feature comparison.</p></div></div>}
     {!processing && failed && !state.error && <div className="patent-search-message patent-search-error" role="alert">{report.errorMessage ?? "The overlap report failed. Please retry."}</div>}

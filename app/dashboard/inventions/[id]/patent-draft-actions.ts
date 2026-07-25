@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { parseClarificationState } from "@/lib/ai/clarification";
+import { selectLatestCompletedPatentSearch } from "@/lib/patents/feature-comparison";
 import {
   MockPatentDraftProvider,
   MOCK_PATENT_DRAFT_PROVIDER,
@@ -94,6 +96,8 @@ function overlapMatches(value: unknown): FeatureOverlapMatch[] {
       publicationNumber: typeof source.publicationNumber === "string" ? source.publicationNumber : null,
       matchType,
       matchedKeywords: strings(source.matchedKeywords),
+      matchedConcepts: strings(source.matchedConcepts),
+      missingConcepts: strings(source.missingConcepts),
       explanation: source.explanation,
     }];
   });
@@ -127,7 +131,7 @@ export async function generatePatentDraft(
   const { supabase, userId } = await authentication();
   const { data: invention, error: inventionError } = await supabase
     .from("invention_cases")
-    .select("id,title,problem_statement,invention_description,development_stage,publicly_disclosed,previously_sold,previously_filed,ai_status,ai_analysis,approved_features,feature_set_version")
+    .select("id,title,problem_statement,invention_description,development_stage,publicly_disclosed,previously_sold,previously_filed,ai_status,ai_analysis,approved_features,feature_set_version,clarification_questions")
     .eq("id", inventionId.data)
     .eq("user_id", userId)
     .maybeSingle();
@@ -138,16 +142,18 @@ export async function generatePatentDraft(
     return { error: "Approve the extracted features before generating a draft." };
   }
 
-  const { data: patentSearch, error: searchError } = await supabase
+  const { data: patentSearchRows, error: searchError } = await supabase
     .from("patent_searches")
-    .select("id,results")
+    .select("*")
     .eq("invention_id", invention.id)
     .eq("user_id", userId)
     .eq("status", "COMPLETED")
     .eq("feature_set_version", invention.feature_set_version)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: false });
+  const patentSearch = selectLatestCompletedPatentSearch(
+    (patentSearchRows ?? []).map((search) => ({ ...search, featureSetVersion: search.feature_set_version, completedAt: typeof search.completed_at === "string" ? search.completed_at : null, createdAt: typeof search.created_at === "string" ? search.created_at : null })),
+    invention.feature_set_version,
+  );
   if (searchError || !patentSearch) return { error: "Complete a patent search before generating a draft." };
 
   const { data: overlapReport, error: reportError } = await supabase
@@ -220,10 +226,13 @@ export async function generatePatentDraft(
 
   try {
     const analysis = record(invention.ai_analysis);
+    const clarification = parseClarificationState(invention.clarification_questions);
     const input: PatentDraftInput = {
       title: typeof analysis.suggestedTitle === "string" ? analysis.suggestedTitle : invention.title,
       problemStatement: invention.problem_statement,
       description: invention.invention_description,
+      noveltyDescription: typeof analysis.noveltyDescription === "string" ? analysis.noveltyDescription : "",
+      clarificationAnswers: clarification?.items.filter((item) => !item.skipped && item.answer.trim()).map((item) => ({ question: item.question, answer: item.answer.trim() })) ?? [],
       developmentStage: invention.development_stage,
       publiclyDisclosed: invention.publicly_disclosed,
       previouslySold: invention.previously_sold,

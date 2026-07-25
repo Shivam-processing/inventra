@@ -1,95 +1,66 @@
-import "server-only";
+import type { PatentDraftInput, PatentDraftSections } from "@/lib/patents/patent-draft-types";
 
-import type {
-  PatentDraftInput,
-  PatentDraftSections,
-} from "@/lib/patents/patent-draft-types";
-
-export const MOCK_PATENT_DRAFT_PROVIDER = {
-  name: "MockPatentDraftProvider",
-  version: "1.0.0",
-} as const;
+export const MOCK_PATENT_DRAFT_PROVIDER = { name: "MockPatentDraftProvider", version: "2.0.0" } as const;
 
 function numbered(values: string[]): string {
   return values.map((value, index) => `${index + 1}. ${value}`).join("\n");
 }
 
-function overlapNotes(input: PatentDraftInput): string {
-  if (!input.overlapMatches.length) {
-    return "The stored overlap report contains insufficient comparison information and requires further review.";
-  }
-
-  return input.overlapMatches.map((match) => {
-    const patent = match.matchedPatentTitle && match.publicationNumber
-      ? ` in ${match.matchedPatentTitle} (${match.publicationNumber})`
-      : " in the searched patent records";
-
-    switch (match.matchType) {
-      case "FULL":
-        return `Similar functionality was identified for the approved feature “${match.feature}”${patent}.`;
-      case "PARTIAL":
-        return `Partial textual overlap was identified for “${match.feature}”${patent}; any differentiation requires careful review.`;
-      case "UNCERTAIN":
-        return `The comparison for “${match.feature}” is uncertain and further review is required.`;
-      case "NOT_FOUND":
-        return `No keyword match was found for “${match.feature}” in the searched records; this does not establish legal novelty.`;
-    }
-  }).join("\n");
-}
-
 function preliminaryClaims(input: PatentDraftInput): string {
-  const dependentFeatures = input.approvedFeatures.length
-    ? input.approvedFeatures
-    : ["No approved feature wording is available"];
-
-  const independent = `1. A preliminary system or apparatus for addressing the stored problem statement, the system or apparatus being configured only as described in the stored invention disclosure: ${input.description}`;
-  const dependent = dependentFeatures.map((feature, index) =>
-    `${index + 2}. The preliminary system or apparatus of claim 1, wherein the approved feature is: ${feature}`,
+  const featureText = input.approvedFeatures.join(" ").toLocaleLowerCase("en");
+  const medicationCompartments = /(?:medicine|medication|pill).{0,30}compartment|compartment.{0,30}(?:medicine|medication|pill)/.test(featureText);
+  const scheduledUnlocking = /schedul|dose time|predetermined time/.test(featureText) && /unlock|lock|access/.test(featureText);
+  const controllerSupported = /controller/i.test([input.description, input.noveltyDescription, ...input.approvedFeatures, ...input.clarificationAnswers.map((item) => item.answer)].join(" "));
+  const independent = medicationCompartments && scheduledUnlocking && controllerSupported
+    ? "1. An apparatus comprising:\nmultiple medicine compartments;\nrespective locking mechanisms associated with the medicine compartments; and\na controller associated with a stored medicine schedule, the controller being configured to unlock only a compartment associated with a scheduled dose."
+    : `1. An apparatus comprising:\n${input.approvedFeatures.slice(0, 4).map((feature) => `${feature.replace(/[.;]+$/, "")};`).join("\n")}\nwherein the apparatus is limited to the recited technical features.`;
+  const dependent = input.approvedFeatures.map((feature, index) =>
+    `${index + 2}. The apparatus of claim ${index === 0 ? "1" : index + 1}, further comprising or being configured for ${feature.replace(/[.;]+$/, "").replace(/^./, (letter) => letter.toLocaleLowerCase("en"))}.`,
   );
-
-  return [
-    "Preliminary, non-legal claim wording for review:",
-    independent,
-    ...dependent,
-  ].join("\n\n");
+  return [independent, ...dependent].join("\n\n");
 }
 
-function disclosureHistory(input: PatentDraftInput): string {
-  const facts = [
-    `Publicly disclosed: ${input.publiclyDisclosed ? "Yes" : "No"}.`,
-    `Previously sold: ${input.previouslySold ? "Yes" : "No"}.`,
-    `Previously filed: ${input.previouslyFiled ? "Yes" : "No"}.`,
-  ];
-  return facts.join(" ");
+function specificTechnicalField(input: PatentDraftInput): string {
+  const stored = [input.title, input.description, input.noveltyDescription, ...input.approvedFeatures].join(" ").toLocaleLowerCase("en");
+  if (/pill|medicine|medication|dose/.test(stored) && /box|container|compartment|dispenser|organiser|organizer/.test(stored)) {
+    return "The disclosure relates to medication storage and dispensing devices, particularly schedule-controlled medicine containers with selectively accessible compartments.";
+  }
+  return input.technicalField.trim()
+    ? `The disclosure relates to ${input.technicalField.trim()}.`
+    : `The disclosure relates to the technical subject matter described as ${input.title}.`;
+}
+
+function clarificationText(input: PatentDraftInput): string {
+  return input.clarificationAnswers.map(({ question, answer }) => `${question}\n${answer}`).join("\n\n");
+}
+
+function abstractText(input: PatentDraftInput): string {
+  const source = [input.description, input.noveltyDescription, ...input.approvedFeatures].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+  return `${input.title}. ${source.split(" ").filter(Boolean).slice(0, 135).join(" ")}`.trim();
 }
 
 export class MockPatentDraftProvider {
   async generate(input: PatentDraftInput): Promise<PatentDraftSections> {
-    const technicalField = input.technicalField.trim()
-      ? input.technicalField.trim()
-      : "The technical field is not specified in the approved stored information.";
-    const patentReferences = input.patentResults.length
-      ? input.patentResults.slice(0, 5).map((patent) => `${patent.title} (${patent.publicationNumber})`).join("; ")
-      : "No patent result records were available in the completed search.";
     const featureText = numbered(input.approvedFeatures);
+    const clarifications = clarificationText(input);
+    const reminderLimitation = /reminder|alert|notification/i.test(`${input.problemStatement} ${input.description}`)
+      ? "The stored information indicates that reminder-only approaches may notify a person without controlling access to the intended item or confirming the described action."
+      : "";
+    const connectivityLimitation = /offline|internet|network|cloud/i.test(`${input.problemStatement} ${input.description} ${input.noveltyDescription} ${clarifications}`)
+      ? "The stored information also identifies continued essential operation without dependence on internet, network, or cloud connectivity."
+      : "";
 
     return {
       title: input.title,
-      technicalField: `The disclosure relates to ${technicalField}.`,
-      background: [
-        input.problemStatement,
-        `The completed patent search returned ${input.patentResults.length} stored result${input.patentResults.length === 1 ? "" : "s"}. References reviewed: ${patentReferences}`,
-        `The preliminary overlap classification is ${input.overlapSummary.classification.replaceAll("_", " ").toLowerCase()}.`,
-        overlapNotes(input),
-        disclosureHistory(input),
-      ].join("\n\n"),
+      technicalField: specificTechnicalField(input),
+      background: [input.problemStatement, reminderLimitation, connectivityLimitation].filter(Boolean).join("\n\n"),
       problemStatement: input.problemStatement,
-      summaryOfInvention: `The stored invention disclosure describes the following approach:\n\n${input.description}\n\nApproved features:\n${featureText}`,
-      detailedDescription: `${input.description}\n\nThe approved feature set is limited to:\n${featureText}\n\nNo additional components, measurements, materials, integrations, or implementation details are inferred in this preliminary draft.`,
+      summaryOfInvention: [input.description, input.noveltyDescription, `Essential features:\n${featureText}`].filter(Boolean).join("\n\n"),
+      detailedDescription: [input.description, clarifications && `Stored clarification answers:\n${clarifications}`, `The described feature set is:\n${featureText}`, "No additional components, measurements, materials, integrations, or implementation details are inferred in this preliminary draft."].filter(Boolean).join("\n\n"),
       essentialFeatures: featureText,
       exampleImplementation: `A preliminary example, limited to the stored invention disclosure, is as follows:\n\n${input.description}\n\nDevelopment stage recorded by the user: ${input.developmentStage}. No unstated implementation details are added.`,
       preliminaryClaims: preliminaryClaims(input),
-      abstract: `${input.title}. ${input.problemStatement} The stored disclosure describes: ${input.description} Approved features: ${input.approvedFeatures.join("; ")}.`,
+      abstract: abstractText(input),
     };
   }
 }

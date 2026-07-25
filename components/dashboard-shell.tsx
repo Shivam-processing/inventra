@@ -1,27 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { logout } from "@/app/auth/actions";
-
-const nav = [
-  ["▦", "Overview"], ["◇", "Inventions"], ["⌕", "Patent searches"], ["▤", "Reports"], ["▧", "Drafts"],
-];
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useLanguage } from "@/components/language-provider";
+import { DASHBOARD_NAV_ITEMS, dashboardNavItemActive } from "@/lib/navigation/dashboard";
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const { t } = useLanguage();
   return <div className="dashboard-shell">
     <aside className={open ? "dashboard-sidebar open" : "dashboard-sidebar"} id="dashboard-navigation">
-      <div className="sidebar-brand"><Link href="/" className="brand"><span>IN</span> Inventra</Link><button type="button" aria-label="Close sidebar" onClick={() => setOpen(false)}>×</button></div>
-      <nav aria-label="Dashboard navigation">
-        <p>WORKSPACE</p>
-        {nav.map(([icon, label], index) => <a className={index === 0 ? "active" : ""} href="#" key={label} onClick={() => setOpen(false)}><span>{icon}</span>{label}{label === "Inventions" && <small>3</small>}</a>)}
+      <div className="sidebar-brand"><Link href="/" className="brand"><span>IN</span> Inventra</Link><button type="button" aria-label={t("navigation.closeSidebar")} onClick={() => setOpen(false)}>×</button></div>
+      <nav aria-label={t("navigation.main")}>
+        <p>{t("navigation.workspace").toUpperCase()}</p>
+        {DASHBOARD_NAV_ITEMS.map((item) => <Link className={dashboardNavItemActive(pathname, item.href) ? "active" : undefined} href={item.href} key={item.href} onClick={() => setOpen(false)}><span>{item.icon}</span>{t(item.labelKey)}</Link>)}
       </nav>
-      <div className="sidebar-bottom"><a href="#"><span>?</span>Help & resources</a><a href="#"><span>⚙</span>Settings</a><div className="user-chip"><p><strong>Alex Morgan</strong><small>Signed in</small></p><form action={logout}><button type="submit" aria-label="Log out">Log out</button></form></div></div>
+      <div className="sidebar-bottom"><div className="user-chip"><p><strong>Inventra</strong><small>{t("navigation.signedIn")}</small></p><form action={logout}><button type="submit" aria-label={t("navigation.logout")}>{t("navigation.logout")}</button></form></div></div>
     </aside>
-    {open && <button className="sidebar-scrim" aria-label="Close sidebar" onClick={() => setOpen(false)} />}
+    {open && <button className="sidebar-scrim" aria-label={t("navigation.closeSidebar")} onClick={() => setOpen(false)} />}
     <div className="dashboard-main">
-      <header className="dashboard-topbar"><button type="button" className="sidebar-toggle" aria-controls="dashboard-navigation" aria-expanded={open} aria-label="Open sidebar" onClick={() => setOpen(true)}>☰</button><span className="mobile-brand">Inventra</span><div><button type="button" aria-label="Notifications">♢<i /></button><span className="avatar">AM</span></div></header>
+      <header className="dashboard-topbar"><button type="button" className="sidebar-toggle" aria-controls="dashboard-navigation" aria-expanded={open} aria-label={t("navigation.openSidebar")} onClick={() => setOpen(true)}>☰</button><span className="mobile-brand">Inventra</span><div><LanguageSwitcher compact /></div></header>
       <main className="dashboard-content">{children}</main>
     </div>
   </div>;

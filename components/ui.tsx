@@ -22,10 +22,10 @@ export function LoadingState() {
   return <div className="state-card" role="status"><span className="spinner" aria-hidden="true" /><div><strong>Analyzing your invention</strong><p>Identifying components and key features…</p></div></div>;
 }
 
-export function EmptyState() {
-  return <div className="state-card empty-state"><span aria-hidden="true">＋</span><div><strong>No inventions yet</strong><p>Create your first project to begin.</p></div></div>;
+export function EmptyState({ title = "No inventions yet", description = "Create your first project to begin." }: { title?: string; description?: string }) {
+  return <div className="state-card empty-state"><span aria-hidden="true">＋</span><div><strong>{title}</strong><p>{description}</p></div></div>;
 }
 
-export function ErrorState() {
-  return <div className="state-card error-state" role="alert"><span aria-hidden="true">!</span><div><strong>Something went wrong</strong><p>Your work is safe. Please try again.</p></div></div>;
+export function ErrorState({ title = "Something went wrong", description = "Your work is safe. Please try again." }: { title?: string; description?: string }) {
+  return <div className="state-card error-state" role="alert"><span aria-hidden="true">!</span><div><strong>{title}</strong><p>{description}</p></div></div>;
 }

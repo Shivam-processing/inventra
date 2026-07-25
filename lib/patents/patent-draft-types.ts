@@ -22,6 +22,8 @@ export type PatentDraftInput = {
   title: string;
   problemStatement: string;
   description: string;
+  noveltyDescription: string;
+  clarificationAnswers: Array<{ question: string; answer: string }>;
   developmentStage: string;
   publiclyDisclosed: boolean;
   previouslySold: boolean;

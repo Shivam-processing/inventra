@@ -1,4 +1,5 @@
 import type { FeatureOverlapMatch, OverlapMatchType } from "@/lib/patents/overlap-types";
+import { compareConceptGroups } from "@/lib/patents/concept-matching";
 
 export type ComparisonPatent = {
   title: string;
@@ -11,6 +12,8 @@ export type ComparisonCell = {
   publicationNumber: string;
   matchType: OverlapMatchType;
   matchedKeywords: string[];
+  matchedConcepts: string[];
+  missingConcepts: string[];
   explanation: string;
 };
 
@@ -28,11 +31,19 @@ export type PatentComparisonMatrix = {
   featureSummaries: FeatureMatchSummary[];
 };
 
-const STOP_WORDS = new Set([
-  "a", "an", "and", "are", "as", "at", "be", "by", "for", "from",
-  "has", "in", "into", "is", "it", "of", "on", "or", "that", "the",
-  "this", "to", "using", "with", "within",
-]);
+export type CompletedPatentSearchCandidate = {
+  id: string;
+  status: string;
+  featureSetVersion: number;
+  completedAt: string | null;
+  createdAt: string | null;
+};
+
+export type SelectablePatent = {
+  id: string;
+  relevanceScore?: number;
+};
+
 const MATCH_STRENGTH: Record<OverlapMatchType, number> = {
   FULL: 4,
   PARTIAL: 3,
@@ -40,64 +51,17 @@ const MATCH_STRENGTH: Record<OverlapMatchType, number> = {
   NOT_FOUND: 1,
 };
 
-function keywords(value: string): string[] {
-  const words = value.toLocaleLowerCase("en").match(/[\p{L}\p{N}]+/gu) ?? [];
-  return [...new Set(words.filter((word) => word.length > 2 && !STOP_WORDS.has(word)))];
-}
-
-function explanation(matchType: OverlapMatchType, matched: number, total: number): string {
-  switch (matchType) {
-    case "FULL":
-      return `${matched} of ${total} significant feature keywords appear in this patent record.`;
-    case "PARTIAL":
-      return `${matched} of ${total} significant feature keywords appear, indicating partial textual overlap.`;
-    case "UNCERTAIN":
-      return total < 2
-        ? "The feature or patent text contains too few specific keywords for a reliable comparison."
-        : `Only ${matched} of ${total} significant feature keywords appear; the available wording is too limited for a reliable match.`;
-    case "NOT_FOUND":
-      return "No significant feature keywords were found in this patent title or abstract.";
-  }
-}
-
 export function compareFeatureToPatent(feature: string, patent: ComparisonPatent): ComparisonCell {
-  const featureKeywords = keywords(feature);
-  const patentKeywords = new Set(keywords(`${patent.title} ${patent.abstract ?? ""}`));
-
-  if (featureKeywords.length < 2 || patentKeywords.size < 2) {
-    return {
-      feature,
-      publicationNumber: patent.publicationNumber,
-      matchType: "UNCERTAIN",
-      matchedKeywords: featureKeywords.filter((word) => patentKeywords.has(word)),
-      explanation: explanation("UNCERTAIN", 0, Math.min(featureKeywords.length, patentKeywords.size)),
-    };
-  }
-
-  const matchedKeywords = featureKeywords.filter((word) => patentKeywords.has(word));
-  if (matchedKeywords.length === 0) {
-    return {
-      feature,
-      publicationNumber: patent.publicationNumber,
-      matchType: "NOT_FOUND",
-      matchedKeywords,
-      explanation: explanation("NOT_FOUND", 0, featureKeywords.length),
-    };
-  }
-
-  const coverage = matchedKeywords.length / featureKeywords.length;
-  const matchType: OverlapMatchType = coverage >= 0.75
-    ? "FULL"
-    : coverage >= 0.3
-      ? "PARTIAL"
-      : "UNCERTAIN";
+  const result = compareConceptGroups(feature, patent.title, patent.abstract);
 
   return {
     feature,
     publicationNumber: patent.publicationNumber,
-    matchType,
-    matchedKeywords,
-    explanation: explanation(matchType, matchedKeywords.length, featureKeywords.length),
+    matchType: result.matchType,
+    matchedKeywords: result.matchedEvidence,
+    matchedConcepts: result.matchedConcepts,
+    missingConcepts: result.missingConcepts,
+    explanation: result.explanation,
   };
 }
 
@@ -126,6 +90,8 @@ export function buildPatentComparisonMatrix(
       publicationNumber: patent.publicationNumber,
       matchType: existing.matchType,
       matchedKeywords: [...existing.matchedKeywords],
+      matchedConcepts: [...(existing.matchedConcepts ?? [])],
+      missingConcepts: [...(existing.missingConcepts ?? [])],
       explanation: existing.explanation,
     };
   }));
@@ -155,6 +121,52 @@ export function updatePatentSelection(current: string[], patentId: string, selec
   if (current.includes(patentId)) return { selection: current, limitReached: false };
   if (current.length >= maximum) return { selection: current, limitReached: true };
   return { selection: [...current, patentId], limitReached: false };
+}
+
+function timestamp(value: string | null): number | null {
+  if (!value) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function searchTimestamp(search: CompletedPatentSearchCandidate): number {
+  return timestamp(search.completedAt) ?? timestamp(search.createdAt) ?? Number.NEGATIVE_INFINITY;
+}
+
+export function selectLatestCompletedPatentSearch<T extends CompletedPatentSearchCandidate>(
+  searches: T[],
+  currentFeatureSetVersion: number,
+): T | null {
+  return searches
+    .filter((search) => search.status === "COMPLETED" && search.featureSetVersion === currentFeatureSetVersion)
+    .map((search, index) => ({ search, index }))
+    .sort((left, right) => {
+      const completionOrder = searchTimestamp(right.search) - searchTimestamp(left.search);
+      if (completionOrder) return completionOrder;
+      const creationOrder = (timestamp(right.search.createdAt) ?? Number.NEGATIVE_INFINITY)
+        - (timestamp(left.search.createdAt) ?? Number.NEGATIVE_INFINITY);
+      return creationOrder || left.search.id.localeCompare(right.search.id, "en") || left.index - right.index;
+    })[0]?.search ?? null;
+}
+
+export function defaultPatentSelection(patents: SelectablePatent[], maximum = 3): string[] {
+  return patents
+    .map((patent, index) => ({ patent, index }))
+    .sort((left, right) => (right.patent.relevanceScore ?? Number.NEGATIVE_INFINITY)
+      - (left.patent.relevanceScore ?? Number.NEGATIVE_INFINITY) || left.index - right.index)
+    .slice(0, maximum)
+    .map(({ patent }) => patent.id);
+}
+
+export function reconcilePatentSelection(
+  selectedIds: string[],
+  patents: SelectablePatent[],
+  sourceChanged: boolean,
+): { selection: string[]; removedMissing: boolean } {
+  if (sourceChanged) return { selection: defaultPatentSelection(patents), removedMissing: selectedIds.length > 0 };
+  const availableIds = new Set(patents.map((patent) => patent.id));
+  const selection = selectedIds.filter((id) => availableIds.has(id));
+  return { selection, removedMissing: selection.length !== selectedIds.length };
 }
 
 export function isPatentComparisonStale(searchFeatureSetVersion: number, currentFeatureSetVersion: number) {

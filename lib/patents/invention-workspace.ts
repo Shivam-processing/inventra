@@ -77,6 +77,8 @@ export function resolveWorkspaceSection(
   recommended: WorkspaceSectionId,
 ): WorkspaceSectionId {
   if (requested === null || requested === undefined || requested === "") return recommended;
+  if (requested === "details") return "invention-details";
+  if (requested === "timeline" || requested === "history") return "activity";
   return isWorkspaceSection(requested) ? requested : "overview";
 }
 

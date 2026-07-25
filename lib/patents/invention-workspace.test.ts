@@ -79,6 +79,8 @@ describe("invention workspace navigation", () => {
 
   it("uses the same validated identifiers for mobile selection", () => {
     assert.equal(resolveWorkspaceSection("activity", "overview"), "activity");
+    assert.equal(resolveWorkspaceSection("timeline", "overview"), "activity");
+    assert.equal(resolveWorkspaceSection("history", "overview"), "activity");
     assert.equal(resolveWorkspaceSection("not-a-mobile-option", "overview"), "overview");
   });
 

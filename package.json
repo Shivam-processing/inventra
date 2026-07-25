@@ -7,14 +7,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test lib/patents/workflow-state.test.ts lib/ai/clarification.test.ts lib/patents/patent-result-filter.test.ts lib/patents/feature-comparison.test.ts lib/patents/invention-timeline.test.ts lib/patents/invention-workspace.test.ts",
+    "test": "tsx --test lib/patents/workflow-state.test.ts lib/ai/clarification.test.ts lib/patents/patent-result-filter.test.ts lib/patents/patent-search-relevance.test.ts lib/patents/concept-matching.test.ts lib/patents/feature-comparison.test.ts lib/patents/patent-cost-data.test.ts lib/patents/mock-patent-draft-provider.test.ts lib/patents/invention-timeline.test.ts lib/patents/invention-workspace.test.ts lib/patents/patent-landscape.test.ts lib/i18n/i18n.test.ts lib/reports/full-report-utils.test.ts lib/reports/full-report-document.test.tsx lib/navigation/dashboard.test.ts lib/inventions/deletion.test.ts lib/inventions/details-validation.test.ts",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
     "check:epo": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local --experimental-strip-types scripts/check-epo.mjs"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.5.1",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.7",
+    "d3": "^7.9.0",
     "docx": "^9.7.1",
     "motion": "^12.42.2",
     "next": "16.2.11",
@@ -27,6 +29,7 @@
   "devDependencies": {
     "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4",
+    "@types/d3": "^7.4.3",
     "@types/node": "^20",
     "@types/pdfkit": "^0.17.6",
     "@types/react": "^19",

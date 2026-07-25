@@ -154,19 +154,28 @@ function ensurePdfSpace(document: PDFKit.PDFDocument, requiredHeight: number) {
 }
 
 function writePdfSection(document: PDFKit.PDFDocument, label: string, content: string) {
-  ensurePdfSpace(document, 72);
-  document.moveDown(1.1).font("Helvetica-Bold").fontSize(15).fillColor("#0B3D36").text(label, { lineGap: 2 });
-  document.moveDown(0.45).font("Helvetica").fontSize(11).fillColor("#243B53").text(content, {
-    align: "left",
-    lineGap: 5,
-    paragraphGap: 9,
-  });
+  const paragraphs = content.split(/\n{2,}/).filter(Boolean);
+  if (label === "Preliminary claims" && document.y > document.page.margins.top + 150) document.addPage();
+  document.font("Helvetica").fontSize(10.75);
+  const contentWidth = document.page.width - document.page.margins.left - document.page.margins.right;
+  const firstParagraphHeight = paragraphs[0] ? document.heightOfString(paragraphs[0], { lineGap: 4, width: contentWidth }) : 0;
+  const availablePageHeight = document.page.height - document.page.margins.top - document.page.margins.bottom;
+  ensurePdfSpace(document, 55 + Math.min(firstParagraphHeight, availablePageHeight - 55));
+  document.moveDown(0.9).font("Helvetica-Bold").fontSize(14.5).fillColor("#0B3D36").text(label, { lineGap: 2 });
+  document.moveDown(0.4);
+  for (const paragraph of paragraphs) {
+    document.font("Helvetica").fontSize(10.75).fillColor("#243B53");
+    const height = document.heightOfString(paragraph, { lineGap: 4, width: contentWidth });
+    if (height <= availablePageHeight && document.y + height > document.page.height - document.page.margins.bottom) document.addPage();
+    document.text(paragraph, { align: "left", lineGap: 4, paragraphGap: 8 });
+    document.moveDown(0.6);
+  }
 }
 
 export async function createPatentDraftPdf(data: PatentDraftExportData) {
   const document = new PDFDocument({
     size: "A4",
-    margins: { top: 64, right: 64, bottom: 68, left: 64 },
+    margins: { top: 56, right: 56, bottom: 60, left: 56 },
     bufferPages: true,
     info: {
       Title: data.sections.title,
@@ -202,6 +211,12 @@ export async function createPatentDraftPdf(data: PatentDraftExportData) {
     document.switchToPage(pageRange.start + index);
     const bottomMargin = document.page.margins.bottom;
     document.page.margins.bottom = 0;
+    if (index > 0) document.font("Helvetica").fontSize(8).fillColor("#7B8794").text(
+      data.sections.title,
+      document.page.margins.left,
+      25,
+      { width: document.page.width - document.page.margins.left - document.page.margins.right, align: "left", lineBreak: false, ellipsis: true },
+    );
     document.font("Helvetica").fontSize(9).fillColor("#7B8794").text(
       `Page ${index + 1} of ${pageRange.count}`,
       document.page.margins.left,

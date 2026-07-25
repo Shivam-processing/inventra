@@ -1,12 +1,13 @@
 import "server-only";
 
 import { EpoOpsClient } from "@/lib/patents/epo-client";
-
-type SearchInput = {
-  title: string;
-  technicalField: string;
-  approvedFeatures: string[];
-};
+import {
+  deduplicateRelevantPatents,
+  filterAndDeduplicatePatents,
+  patentSearchTerms,
+  type PatentSearchPlan,
+  type RelevanceSearchMode,
+} from "@/lib/patents/patent-search-relevance";
 
 export type PatentSearchResult = {
   title: string;
@@ -17,13 +18,15 @@ export type PatentSearchResult = {
   abstract: string | null;
   sourceId: string;
   sourceUrl: string;
+  relevanceScore?: number;
+  searchMode?: RelevanceSearchMode;
 };
 
-const STOP_WORDS = new Set([
-  "a", "an", "and", "are", "as", "at", "be", "by", "for", "from",
-  "in", "into", "is", "it", "of", "on", "or", "that", "the", "to",
-  "using", "with", "system", "device", "method", "invention",
-]);
+export type PatentSearchExecution = {
+  results: PatentSearchResult[];
+  mode: RelevanceSearchMode;
+  searchTerms: string[];
+};
 
 type JsonRecord = Record<string, unknown>;
 
@@ -51,37 +54,6 @@ function text(value: unknown): string {
     .map(([, child]) => text(child))
     .filter(Boolean)
     .join(" ");
-}
-
-function keywords(value: string, maximum = 5): string[] {
-  const matches = value.toLocaleLowerCase("en").match(/[\p{L}\p{N}]+/gu) ?? [];
-  return [...new Set(matches)]
-    .filter((word) => word.length > 2 && !STOP_WORDS.has(word))
-    .slice(0, maximum);
-}
-
-function conciseTerm(value: string): string {
-  return keywords(value).join(" ");
-}
-
-export function buildPatentSearchTerms(input: SearchInput): string[] {
-  const candidates = [
-    input.title,
-    input.technicalField,
-    ...input.approvedFeatures.slice(0, 3),
-  ];
-
-  return [...new Set(candidates.map(conciseTerm).filter(Boolean))].slice(0, 5);
-}
-
-function toCql(searchTerms: string[]): string {
-  return searchTerms
-    .map((term) => {
-      const clauses = keywords(term).map((word) => `ta="${word}"`);
-      return clauses.length > 1 ? `(${clauses.join(" and ")})` : clauses[0];
-    })
-    .filter(Boolean)
-    .join(" or ");
 }
 
 function localizedText(value: unknown): string {
@@ -143,13 +115,34 @@ function normalizeDocument(value: unknown): PatentSearchResult | null {
 }
 
 export async function searchEpoPatents(
-  searchTerms: string[],
+  plan: PatentSearchPlan,
   client = new EpoOpsClient(),
-): Promise<PatentSearchResult[]> {
-  const query = toCql(searchTerms);
-  if (!query) return [];
+): Promise<PatentSearchExecution> {
+  if (!plan.strictQuery) return { results: [], mode: "strict", searchTerms: patentSearchTerms(plan, "strict") };
 
-  const payload = record(await client.searchPublishedData(query, 10));
+  const strictResults = normalizeSearchPayload(await client.searchPublishedData(plan.strictQuery, 40));
+  const usefulStrictResults = filterAndDeduplicatePatents(strictResults, plan, "strict");
+  if (usefulStrictResults.length >= 5 || !plan.fallbackQuery || plan.fallbackQuery === plan.strictQuery) {
+    return {
+      results: usefulStrictResults.slice(0, 10),
+      mode: "strict",
+      searchTerms: patentSearchTerms(plan, "strict"),
+    };
+  }
+
+  const fallbackResults = normalizeSearchPayload(await client.searchPublishedData(plan.fallbackQuery, 40));
+  const usefulFallbackResults = filterAndDeduplicatePatents(fallbackResults, plan, "fallback");
+  const results = deduplicateRelevantPatents([...usefulStrictResults, ...usefulFallbackResults]);
+
+  return {
+    results: results.slice(0, 10),
+    mode: "fallback",
+    searchTerms: patentSearchTerms(plan, "fallback"),
+  };
+}
+
+function normalizeSearchPayload(payloadValue: unknown): PatentSearchResult[] {
+  const payload = record(payloadValue);
   const worldData = record(payload["ops:world-patent-data"]);
   const search = record(worldData["ops:biblio-search"]);
   const searchResult = record(search["ops:search-result"]);
@@ -158,6 +151,5 @@ export async function searchEpoPatents(
 
   return exchangeDocuments
     .map(normalizeDocument)
-    .filter((result): result is PatentSearchResult => Boolean(result))
-    .slice(0, 10);
+    .filter((result): result is PatentSearchResult => Boolean(result));
 }

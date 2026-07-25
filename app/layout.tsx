@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { LanguageProvider } from "@/components/language-provider";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { localeConfig } from "@/lib/i18n/locales";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,17 +23,20 @@ export const metadata: Metadata = {
   description: "Structure your invention, review key features, explore related patents, and create an editable patent draft.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const config = localeConfig(locale);
   return (
     <html
-      lang="en"
+      lang={config.htmlLang}
+      dir={config.dir}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body>{children}</body>
+      <body><LanguageProvider locale={locale}>{children}</LanguageProvider></body>
     </html>
   );
 }

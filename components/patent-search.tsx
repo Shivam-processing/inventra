@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useId, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import {
@@ -25,6 +26,7 @@ export type PatentSearchRecord = {
   searchTerms: string[];
   results: PatentSearchResult[];
   errorMessage: string | null;
+  completedAt: string | null;
 };
 
 const initialState: PatentSearchActionState = {};
@@ -57,6 +59,7 @@ function PatentResult({ result, index }: { result: PatentSearchResult; index: nu
         <div><dt>Applicant</dt><dd>{result.applicant ?? "Not listed"}</dd></div>
         <div><dt>Jurisdiction</dt><dd>{jurisdiction}</dd></div>
         <div><dt>{result.priorityDate ? "Priority date" : "Publication date"}</dt><dd>{result.priorityDate ?? result.publicationDate ?? "Not listed"}</dd></div>
+        {typeof result.relevanceScore === "number" && <div><dt>Search relevance</dt><dd>{result.relevanceScore} points{result.searchMode ? ` · ${result.searchMode}` : ""}</dd></div>}
       </dl>
       {result.abstract && <>
         <p id={abstractId} className={!abstractIsLong || abstractExpanded ? "patent-abstract expanded" : "patent-abstract"}>{result.abstract}</p>
@@ -228,6 +231,7 @@ export function PatentSearch({
   inventionId,
   featuresApproved,
   search,
+  matrixSearch,
   currentFeatureSetVersion,
   approvedFeatures,
   existingOverlapMatches,
@@ -236,6 +240,7 @@ export function PatentSearch({
   inventionId: string;
   featuresApproved: boolean;
   search: PatentSearchRecord | null;
+  matrixSearch: PatentSearchRecord | null;
   currentFeatureSetVersion: number;
   approvedFeatures: string[];
   existingOverlapMatches?: unknown;
@@ -264,21 +269,22 @@ export function PatentSearch({
     {loadError && <div className="patent-search-message patent-search-error" role="alert">{loadError}</div>}
     {state.error && <div className="patent-search-message patent-search-error" role="alert">{state.error}</div>}
     {state.message && <div className="patent-search-message patent-search-success" role="status">✓ {state.message}</div>}
+    {!processing && complete && !stale && search.results.length > 0 && <Link className="button button-default" href={`/dashboard/inventions/${inventionId}/landscape`}>Explore patent landscape</Link>}
 
     {processing && <div className="patent-search-loading" role="status"><span className="spinner" aria-hidden="true" /><div><strong>Searching EPO OPS</strong><p>Comparing concise technical queries with worldwide bibliographic data…</p></div></div>}
 
     {!processing && search?.searchTerms.length ? <div className="patent-search-terms"><span>SEARCH TERMS</span><div>{search.searchTerms.map((term) => <code key={term}>{term}</code>)}</div></div> : null}
 
     {!processing && complete && search.results.length > 0 && <PatentResultBrowser search={search} isCurrentSearch={!stale} />}
-    {!processing && complete && search.results.length === 0 && <div className="patent-search-empty"><span>⌕</span><div><strong>No matching patents found</strong><p>Try refining the approved features, then run the search again.</p></div></div>}
+    {!processing && complete && search.results.length === 0 && <div className="patent-search-empty"><span>⌕</span><div><strong>No sufficiently relevant prior-art results were found using the current search terms.</strong><p>Refine the approved features and try again.</p></div></div>}
     {!processing && failed && !state.error && <div className="patent-search-message patent-search-error" role="alert">{search.errorMessage ?? "The EPO patent search failed. Please retry."}</div>}
     <PatentComparisonMatrix
-      key={search?.id ?? "no-patent-search"}
+      key={matrixSearch?.id ?? "no-current-patent-search"}
       features={approvedFeatures}
       featuresApproved={featuresApproved}
       currentFeatureSetVersion={currentFeatureSetVersion}
-      search={search}
-      loading={processing}
+      search={matrixSearch}
+      loading={processing && !matrixSearch}
       existingOverlapMatches={existingOverlapMatches}
     />
   </section>;

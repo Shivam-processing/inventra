@@ -107,6 +107,14 @@ export async function analyseInvention(_: AnalysisActionState, formData: FormDat
   try {
     const { name: providerName, provider } = getProvider();
     let imageUrls: string[] = [];
+    const previousAnalysis = invention.ai_analysis && typeof invention.ai_analysis === "object" && !Array.isArray(invention.ai_analysis)
+      ? invention.ai_analysis as Record<string, unknown>
+      : {};
+    const storedClarifications = parseClarificationState(invention.clarification_questions);
+    const clarificationAnswers = storedClarifications?.items
+      .filter((item) => item.answer.trim().length > 0 && !item.skipped)
+      .map((item) => item.answer.trim())
+      .join("\n") ?? "";
 
     if (providerName === "openai") {
       const { data: imageRows, error: imageError } = await supabase
@@ -134,11 +142,14 @@ export async function analyseInvention(_: AnalysisActionState, formData: FormDat
       title: invention.title,
       problemStatement: invention.problem_statement,
       description: invention.invention_description,
+      proposedSolution: typeof previousAnalysis.proposedSolution === "string" ? previousAnalysis.proposedSolution : undefined,
+      noveltyDescription: typeof previousAnalysis.noveltyDescription === "string" ? previousAnalysis.noveltyDescription : undefined,
+      claimsDraft: typeof previousAnalysis.claimsDraft === "string"
+        ? previousAnalysis.claimsDraft
+        : typeof previousAnalysis.preliminaryClaims === "string" ? previousAnalysis.preliminaryClaims : undefined,
+      clarificationAnswers,
       imageUrls,
     });
-    const previousAnalysis = invention.ai_analysis && typeof invention.ai_analysis === "object" && !Array.isArray(invention.ai_analysis)
-      ? invention.ai_analysis as Record<string, unknown>
-      : {};
     const clarificationState = resolveClarificationState({
       title: invention.title,
       problemStatement: invention.problem_statement,
@@ -155,7 +166,13 @@ export async function analyseInvention(_: AnalysisActionState, formData: FormDat
       .from("invention_cases")
       .update({
         ai_status: "NEEDS_REVIEW",
-        ai_analysis: result.analysis,
+        ai_analysis: {
+          ...result.analysis,
+          noveltyDescription: typeof previousAnalysis.noveltyDescription === "string" ? previousAnalysis.noveltyDescription : "",
+          claimsDraft: typeof previousAnalysis.claimsDraft === "string"
+            ? previousAnalysis.claimsDraft
+            : typeof previousAnalysis.preliminaryClaims === "string" ? previousAnalysis.preliminaryClaims : "",
+        },
         clarification_questions: clarificationState,
       })
       .eq("id", invention.id)
@@ -224,15 +241,16 @@ export async function approveAnalysis(_: AnalysisActionState, formData: FormData
     : [];
   const featuresChanged = JSON.stringify(approvedFeatures) !== JSON.stringify(featureResult.data);
   const approving = intent === "approve_features";
-  const nextVersion = approving && (featuresChanged || invention.feature_set_version === 0)
+  const clarificationState = parseClarificationState(invention.clarification_questions);
+  const featureReviewRequired = clarificationState?.featureReviewRequired || existingAnalysis.featureReviewRequired === true;
+  const nextVersion = approving && (featuresChanged || invention.feature_set_version === 0 || featureReviewRequired)
     ? invention.feature_set_version + 1
     : invention.feature_set_version;
-  const clarificationState = parseClarificationState(invention.clarification_questions);
   let update = supabase
     .from("invention_cases")
     .update({
       ai_status: approving ? "APPROVED" : "NEEDS_REVIEW",
-      ai_analysis: { ...analysisFields, keyFeatures: featureResult.data },
+      ai_analysis: { ...existingAnalysis, ...analysisFields, keyFeatures: featureResult.data, featureReviewRequired: false },
       ...(approving && clarificationState ? {
         clarification_questions: { ...clarificationState, featureReviewRequired: false },
       } : {}),

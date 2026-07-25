@@ -16,6 +16,10 @@ export type InventionAnalysisInput = {
   title: string;
   problemStatement: string;
   description: string;
+  proposedSolution?: string;
+  noveltyDescription?: string;
+  claimsDraft?: string;
+  clarificationAnswers?: string;
   imageUrls?: string[];
 };
 

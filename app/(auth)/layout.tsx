@@ -1,18 +1,22 @@
 import Link from "next/link";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { createTranslator } from "@/lib/i18n/translate";
 
-export default function AuthLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function AuthLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const t = createTranslator(await getLocale());
   return <main className="auth-page">
-    <Link href="/" className="brand"><span>IN</span> Inventra</Link>
+    <div className="auth-topbar"><Link href="/" className="brand"><span>IN</span> Inventra</Link><LanguageSwitcher /></div>
     <section className="auth-shell">
       <div className="auth-context" aria-hidden="true">
-        <span>YOUR WORKSPACE</span>
-        <h2>Build a stronger patent story, one clear step at a time.</h2>
-        <p>Review every feature, resolve uncertainty, and keep control of your draft.</p>
-        <div><i>✓</i><span><strong>Private workspace</strong><small>Your ideas stay tied to your account.</small></span></div>
-        <div><i>✓</i><span><strong>Review at every stage</strong><small>Nothing moves forward without you.</small></span></div>
+        <span>{t("auth.workspace")}</span>
+        <h2>{t("auth.contextTitle")}</h2>
+        <p>{t("auth.contextDescription")}</p>
+        <div><i>✓</i><span><strong>{t("auth.private")}</strong><small>{t("auth.privateDetail")}</small></span></div>
+        <div><i>✓</i><span><strong>{t("auth.review")}</strong><small>{t("auth.reviewDetail")}</small></span></div>
       </div>
       {children}
     </section>
-    <small className="auth-legal">Inventra is not a law firm and does not provide legal advice.</small>
+    <small className="auth-legal">{t("landing.legal")}</small>
   </main>;
 }
