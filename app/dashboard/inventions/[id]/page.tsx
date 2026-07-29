@@ -45,6 +45,7 @@ type Invention = {
   clarification_questions: unknown;
   approved_features: unknown;
   feature_set_version: number;
+  proposed_brand_name: string | null;
 };
 
 type ImageRow = Omit<InventionImage, "signedUrl"> & {
@@ -135,7 +136,7 @@ export default async function InventionDetailPage({ params, searchParams }: {
 
   const { data: inventionData, error: inventionError } = await supabase
     .from("invention_cases")
-    .select("id,title,problem_statement,invention_description,development_stage,publicly_disclosed,previously_sold,previously_filed,preferred_language,ai_status,ai_analysis,clarification_questions,approved_features,feature_set_version")
+    .select("id,title,problem_statement,invention_description,development_stage,publicly_disclosed,previously_sold,previously_filed,preferred_language,ai_status,ai_analysis,clarification_questions,approved_features,feature_set_version,proposed_brand_name")
     .eq("id", id)
     .eq("user_id", userId)
     .maybeSingle();
@@ -335,6 +336,9 @@ export default async function InventionDetailPage({ params, searchParams }: {
         <section className="workspace-overview-summary"><div><span className="eyebrow">PRIVATE INVENTION</span><h3>{invention.title}</h3><p>{formatLabel(invention.development_stage)} · Feature set v{invention.feature_set_version}</p></div><span className={`workspace-overview-status status-${status.toLowerCase()}`}>{status === "APPROVED" ? "Features approved" : status === "PROCESSING" ? "Analysis in progress" : status === "FAILED" ? "Analysis error" : status === "NEEDS_REVIEW" ? "Review required" : "Analysis not started"}</span></section>
         <WorkflowProgress compact inventionId={invention.id} input={workflowInput} initialState={workflowState} />
         <dl className="workspace-version-summary"><div><dt>Current features</dt><dd>v{invention.feature_set_version}</dd></div><div><dt>Latest search</dt><dd>{searchRow ? `Feature set v${searchRow.feature_set_version}` : "Not created"}</dd></div><div><dt>Latest report</dt><dd>{reportRow ? `Feature set v${reportRow.feature_set_version}` : "Not created"}</dd></div><div><dt>Latest draft</dt><dd>{latestDraftRow ? `Draft v${latestDraftRow.version}` : "Not created"}</dd></div></dl>
+        <Link className="workspace-manufacturing-link" href={`/dashboard/manufacturing?invention=${invention.id}`}><span aria-hidden="true">⚙</span><span><strong>Plan manufacturing</strong><small>Break this invention into components, cost ranges, supplier leads and readiness actions.</small></span><b aria-hidden="true">→</b></Link>
+        <Link className="workspace-grants-link" href={`/dashboard/grants?invention=${invention.id}`}><span aria-hidden="true">₹</span><span><strong>Find government grants and schemes</strong><small>Match this invention with curated and current official support programmes.</small></span><b aria-hidden="true">→</b></Link>
+        <Link className="workspace-trademark-link" href={`/dashboard/trademarks?invention=${invention.id}`}><span aria-hidden="true">™</span><span><strong>Check product or brand name</strong><small>Run preliminary visual, phonetic and conceptual screening before official registry verification.</small>{invention.proposed_brand_name && <em>Proposed brand: {invention.proposed_brand_name}</em>}</span><b aria-hidden="true">→</b></Link>
         <section className="invention-danger-zone"><div><span className="eyebrow">DANGER ZONE</span><h3>Delete this invention</h3><p>Permanently remove this invention and all related private workflow records.</p></div><DeleteInventionDialog inventionId={invention.id} inventionTitle={invention.title} /></section>
       </div>}
       details={<InventionDetailsEditor details={{

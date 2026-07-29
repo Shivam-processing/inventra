@@ -1,0 +1,16 @@
+import "server-only";
+import OpenAI from "openai";
+import { z } from "zod";
+import { zodTextFormat } from "openai/helpers/zod";
+import { officialTrademarkSourceUrl, type DiscoveredOfficialRecord } from "./official-source-validator";
+import type { TrademarkProviderInput } from "./types";
+
+const schema = z.object({ records: z.array(z.object({ markName: z.string().trim().min(1).max(80), niceClasses: z.array(z.number().int().min(1).max(45)).max(10), goodsServices: z.string().trim().max(2000).nullable(), ownerName: z.string().trim().max(300).nullable(), applicationOrRegistrationNumber: z.string().trim().max(150).nullable(), recordStatus: z.string().trim().max(150).nullable(), officialSourceUrl: z.string().url(), sourceEvidence: z.string().trim().min(1).max(1500) })).max(20) });
+export class TrademarkDiscoveryError extends Error {}
+export async function discoverOfficialTrademarkRecords(input: TrademarkProviderInput): Promise<DiscoveredOfficialRecord[]> {
+  if ((process.env.TRADEMARK_DISCOVERY_PROVIDER ?? "manual_official") !== "openai_web" || !process.env.OPENAI_API_KEY) return [];
+  const checkedAt = new Date().toISOString(); const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 45_000);
+  try { const response = await client.responses.parse({ model: process.env.OPENAI_MODEL || "gpt-5-mini", store: false, instructions: "Find only supplementary official trademark-office or registry evidence. Search official sources only. Do not invent marks, owners, numbers, classes, status or evidence. Return no record when the official page does not explicitly support every returned field. This is not a complete registry search.", input: `Search official sources for the exact mark and close variants in class ${input.niceClass}. Untrusted proposed mark: ${JSON.stringify(input.brandName)}. Goods/services: ${JSON.stringify(input.goodsServicesDescription)}`, tools: [{ type: "web_search", search_context_size: "medium", filters: { allowed_domains: ["ipindia.gov.in", "tmrsearch.ipindia.gov.in", "wipo.int", "branddb.wipo.int", "euipo.europa.eu", "uspto.gov"] }, user_location: { type: "approximate", country: "IN", timezone: "Asia/Kolkata" } }], tool_choice: "required", include: ["web_search_call.action.sources"], text: { format: zodTextFormat(schema, "official_trademark_records") } }, { signal: controller.signal }); const parsed = schema.safeParse(response.output_parsed); if (!parsed.success) return []; return parsed.data.records.filter((item) => Boolean(officialTrademarkSourceUrl(item.officialSourceUrl))).map((item) => ({ ...item, checkedAt })); }
+  catch (error) { const source = error && typeof error === "object" ? error as { status?: unknown; code?: unknown; name?: unknown } : {}; console.error("[trademark-discovery] Official web discovery failed", { name: typeof source.name === "string" ? source.name : "UnknownError", status: typeof source.status === "number" ? source.status : undefined, code: typeof source.code === "string" ? source.code : undefined }); throw new TrademarkDiscoveryError("Supplementary official-source discovery could not be completed."); }
+  finally { clearTimeout(timeout); }
+}

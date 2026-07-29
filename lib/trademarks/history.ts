@@ -1,0 +1,9 @@
+import { trademarkOverallStatusSchema, trademarkResultSchema, type TrademarkHistoryItem } from "./types";
+
+export function storedTrademarkHistory(row: Record<string, unknown>, inventionTitle: string | null, currentProviderVersion = "1.0.0"): TrademarkHistoryItem | null {
+  if (typeof row.id !== "string" || typeof row.brand_name !== "string" || typeof row.nice_class !== "number" || typeof row.provider !== "string" || typeof row.provider_version !== "string" || typeof row.created_at !== "string") return null;
+  const result = trademarkResultSchema.safeParse(row.analysis_result); const overall = trademarkOverallStatusSchema.safeParse(row.overall_status);
+  return { id: row.id, inventionId: typeof row.invention_id === "string" ? row.invention_id : null, inventionTitle, brandName: row.brand_name, niceClass: row.nice_class, status: row.status === "COMPLETED" ? "COMPLETED" : row.status === "PROCESSING" ? "PROCESSING" : "FAILED", overallStatus: overall.success ? overall.data : null, officialVerificationStatus: typeof row.official_verification_status === "string" ? row.official_verification_status : "NOT_PERFORMED", provider: row.provider, providerVersion: row.provider_version, createdAt: row.created_at, result: result.success ? result.data : null, olderProviderVersion: row.provider_version !== currentProviderVersion };
+}
+export function paginateTrademarkHistory<T>(items: T[], page: number, pageSize = 8) { const totalPages = Math.max(1, Math.ceil(items.length / pageSize)); const safePage = Math.min(totalPages, Math.max(1, Math.trunc(page) || 1)); return { items: items.slice((safePage - 1) * pageSize, safePage * pageSize), page: safePage, totalPages, totalItems: items.length }; }
+export function newestTrademarkHistory<T extends { createdAt: string }>(items: T[]) { return [...items].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)); }

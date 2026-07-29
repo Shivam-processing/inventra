@@ -7,6 +7,9 @@ describe("dashboard navigation", () => {
     assert.deepEqual(DASHBOARD_NAV_ITEMS.map((item) => item.href), [
       "/dashboard",
       "/dashboard/inventions",
+      "/dashboard/manufacturing",
+      "/dashboard/grants",
+      "/dashboard/trademarks",
       "/dashboard/inventions/new",
     ]);
     assert.equal(DASHBOARD_NAV_ITEMS.some((item) => String(item.href) === "#"), false);
@@ -17,5 +20,8 @@ describe("dashboard navigation", () => {
     assert.equal(dashboardNavItemActive("/dashboard/inventions/new", "/dashboard/inventions/new"), true);
     assert.equal(dashboardNavItemActive("/dashboard/inventions/new", "/dashboard/inventions"), false);
     assert.equal(dashboardNavItemActive("/dashboard/inventions/abc", "/dashboard/inventions"), true);
+    assert.equal(dashboardNavItemActive("/dashboard/grants", "/dashboard/grants"), true);
+    assert.equal(dashboardNavItemActive("/dashboard/manufacturing", "/dashboard/manufacturing"), true);
+    assert.equal(dashboardNavItemActive("/dashboard/trademarks", "/dashboard/trademarks"), true);
   });
 });
