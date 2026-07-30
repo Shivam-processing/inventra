@@ -1,5 +1,6 @@
 import type { FeatureOverlapMatch, OverlapSummary } from "@/lib/patents/overlap-types";
 import type { PatentSearchResult } from "@/lib/patents/patent-search";
+import type { PatentDraftFigure } from "@/lib/patents/patent-draft-drawings";
 
 export const PATENT_DRAFT_SECTION_KEYS = [
   "title",
@@ -8,6 +9,7 @@ export const PATENT_DRAFT_SECTION_KEYS = [
   "problemStatement",
   "summaryOfInvention",
   "detailedDescription",
+  "briefDescriptionOfDrawings",
   "essentialFeatures",
   "exampleImplementation",
   "preliminaryClaims",
@@ -33,4 +35,5 @@ export type PatentDraftInput = {
   patentResults: PatentSearchResult[];
   overlapSummary: OverlapSummary;
   overlapMatches: FeatureOverlapMatch[];
+  figures: PatentDraftFigure[];
 };

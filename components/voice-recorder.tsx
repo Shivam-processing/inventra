@@ -6,6 +6,7 @@ import {
   VOICE_LANGUAGES,
   type VoiceLanguageCode,
 } from "@/lib/voice/languages";
+import { transcriptWarnings } from "@/lib/voice/transcript-review";
 
 type RecognitionResult = {
   isFinal: boolean;
@@ -69,10 +70,14 @@ export function VoiceRecorder({
   onTranscript,
   initialLanguage = DEFAULT_VOICE_LANGUAGE,
   onLanguageChange,
+  existingText = "",
+  onReplaceTranscript,
 }: {
   onTranscript: (transcript: string) => void;
   initialLanguage?: VoiceLanguageCode;
   onLanguageChange?: (language: VoiceLanguageCode) => void;
+  existingText?: string;
+  onReplaceTranscript?: (transcript: string) => void;
 }) {
   const supported = useSyncExternalStore(subscribeToBrowserCapability, speechRecognitionSupported, serverSpeechRecognitionSupport);
   const [language, setLanguage] = useState<VoiceLanguageCode>(initialLanguage);
@@ -80,6 +85,9 @@ export function VoiceRecorder({
   const [listening, setListening] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState("");
   const [message, setMessage] = useState("Select a language, then start listening when you are ready.");
+  const [reviewTranscript, setReviewTranscript] = useState("");
+  const [reviewWarnings, setReviewWarnings] = useState<ReturnType<typeof transcriptWarnings>>([]);
+  const reviewRef = useRef<HTMLTextAreaElement | null>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const receivedSpeechRef = useRef(false);
   const stoppingRef = useRef(false);
@@ -141,7 +149,14 @@ export function VoiceRecorder({
         else interim += `${transcript} `;
       }
 
-      if (finalSegments.length) onTranscript(finalSegments.join(" "));
+      if (finalSegments.length) {
+        const finalTranscript = finalSegments.join(" ");
+        const warnings = transcriptWarnings(existingText, finalTranscript);
+        if (warnings.length) {
+          setReviewTranscript(finalTranscript);
+          setReviewWarnings(warnings);
+        } else onTranscript(finalTranscript);
+      }
       setInterimTranscript(interim.trim());
     };
 
@@ -207,6 +222,7 @@ export function VoiceRecorder({
 
     {active && <div className="voice-wave" aria-hidden="true"><i /><i /><i /><i /><i /></div>}
     {interimTranscript && <div className="voice-interim" aria-live="polite"><span>Listening now</span><p>{interimTranscript}</p></div>}
+    {reviewTranscript && <div className="voice-transcript-review" role="alert"><strong>This transcript may repeat information already present. Review before saving.</strong><p>{reviewWarnings.includes("DUPLICATE") ? "Similar technical wording is already in the description. " : ""}{reviewWarnings.includes("MISSING_PUNCTUATION") ? "The transcript has no closing punctuation. " : ""}{reviewWarnings.includes("INCOMPLETE") ? "The transcript may be an incomplete sentence." : ""}</p><textarea ref={reviewRef} value={reviewTranscript} onChange={(event) => setReviewTranscript(event.target.value)} rows={3} aria-label="Transcript awaiting review" /><div><button type="button" onClick={() => { onTranscript(reviewTranscript); setReviewTranscript(""); setReviewWarnings([]); }}>Keep transcript</button><button type="button" onClick={() => { onReplaceTranscript?.(reviewTranscript); setReviewTranscript(""); setReviewWarnings([]); }} disabled={!onReplaceTranscript}>Replace selected text</button><button type="button" onClick={() => { setReviewTranscript(""); setReviewWarnings([]); }}>Discard duplicate</button><button type="button" onClick={() => reviewRef.current?.focus()}>Edit transcript</button></div></div>}
     <p className={supported === false ? "voice-message voice-message-error" : "voice-message"} aria-live="polite">{supported === false ? "Voice input is not supported by this browser. You can continue by typing normally." : message}</p>
   </section>;
 }

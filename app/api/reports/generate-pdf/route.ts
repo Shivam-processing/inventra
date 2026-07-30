@@ -1,6 +1,7 @@
 import { savedPatentDraftSectionsSchema } from "@/lib/patents/patent-draft-export";
 import { parseClarificationState } from "@/lib/ai/clarification";
 import { selectLatestCompletedPatentSearch } from "@/lib/patents/feature-comparison";
+import { createPatentDraftFigures } from "@/lib/patents/patent-draft-drawings";
 import { renderFullReportPdf, type FullReportData } from "@/lib/reports/full-report-document";
 import {
   createReportCode,
@@ -15,6 +16,7 @@ import {
   validateCurrentReportWorkflow,
 } from "@/lib/reports/full-report-utils";
 import { createClient } from "@/lib/supabase/server";
+import { uniqueSentences } from "@/lib/voice/transcript-review";
 
 export const runtime = "nodejs";
 
@@ -146,29 +148,35 @@ export async function POST(request: Request) {
     .from("invention_images")
     .select("storage_path,original_name,image_type")
     .eq("invention_id", invention.id)
-    .eq("user_id", userId);
-  const images = await Promise.all((imageRows ?? []).map(async (image) => {
-    const caption = sanitizePdfText(text(image.original_name) || "Uploaded invention image");
+    .eq("user_id", userId)
+    .order("id", { ascending: true });
+  const figureMetadata = createPatentDraftFigures((imageRows ?? []).map((image) => text(image.image_type) || "Other"));
+  const images = await Promise.all((imageRows ?? []).map(async (image, index) => {
+    const figure = figureMetadata[index];
+    const caption = sanitizePdfText(figure.caption);
     const category = sanitizePdfText(text(image.image_type) || "Other");
     try {
       const { data, error } = await supabase.storage.from("invention-images").download(image.storage_path);
-      if (error || !data || (data.type !== "image/jpeg" && data.type !== "image/png")) return { caption, category, dataUri: null };
+      if (error || !data || (data.type !== "image/jpeg" && data.type !== "image/png")) return { figureNumber: figure.figureNumber, caption, category, dataUri: null };
       const bytes = Buffer.from(await data.arrayBuffer());
-      return { caption, category, dataUri: `data:${data.type};base64,${bytes.toString("base64")}` };
+      return { figureNumber: figure.figureNumber, caption, category, dataUri: `data:${data.type};base64,${bytes.toString("base64")}` };
     } catch {
-      return { caption, category, dataUri: null };
+      return { figureNumber: figure.figureNumber, caption, category, dataUri: null };
     }
   }));
 
   const generatedAt = new Date();
+  const storedDescription = sanitizePdfText(text(invention.invention_description) || "Not provided");
+  const inventionDescription = uniqueSentences(storedDescription) || storedDescription;
+  const proposedSolution = uniqueSentences(sanitizePdfText(text(analysis.proposedSolution)), inventionDescription) || "No separate proposed-solution wording was stored.";
   const reportData: FullReportData = {
     reportCode: createReportCode(generatedAt, `${invention.id}:${draft.version}`),
     generatedAt: generatedAt.toISOString(),
     inventorName: sanitizePdfText(inventorName || "Not provided"),
     inventionTitle: sanitizePdfText(text(invention.title) || "Untitled invention"),
-    inventionDescription: sanitizePdfText(text(invention.invention_description) || "Not provided"),
+    inventionDescription,
     problemStatement: sanitizePdfText(text(invention.problem_statement) || "Not provided"),
-    proposedSolution: sanitizePdfText(text(analysis.proposedSolution) || "Not provided"),
+    proposedSolution,
     noveltyDescription: sanitizePdfText(text(analysis.noveltyDescription) || "Not provided"),
     clarificationAnswers: clarification?.items.filter((item) => !item.skipped && item.answer.trim()).map((item) => ({ question: sanitizePdfText(item.question), answer: sanitizePdfText(item.answer) })) ?? [],
     images,

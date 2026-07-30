@@ -269,7 +269,7 @@ export function PatentSearch({
     {loadError && <div className="patent-search-message patent-search-error" role="alert">{loadError}</div>}
     {state.error && <div className="patent-search-message patent-search-error" role="alert">{state.error}</div>}
     {state.message && <div className="patent-search-message patent-search-success" role="status">✓ {state.message}</div>}
-    {!processing && complete && !stale && search.results.length > 0 && <Link className="button button-default" href={`/dashboard/inventions/${inventionId}/landscape`}>Explore patent landscape</Link>}
+    {matrixSearch && matrixSearch.status === "COMPLETED" && matrixSearch.featureSetVersion === currentFeatureSetVersion && matrixSearch.results.length > 0 && <Link className="button button-default" href={`/dashboard/inventions/${inventionId}/landscape`}>Open patent landscape</Link>}
 
     {processing && <div className="patent-search-loading" role="status"><span className="spinner" aria-hidden="true" /><div><strong>Searching EPO OPS</strong><p>Comparing concise technical queries with worldwide bibliographic data…</p></div></div>}
 

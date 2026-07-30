@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { analyseTrademark, deleteTrademarkHistory, saveProposedBrandName } from "@/app/dashboard/trademarks/actions";
 import { paginateTrademarkHistory } from "@/lib/trademarks/history";
-import { niceClass } from "@/lib/trademarks/nice-classes";
+import { detectStrongClassMismatch, niceClass, resolveClassMismatchDecision, type ClassMismatchWarning } from "@/lib/trademarks/nice-classes";
 import { DEFAULT_TRADEMARK_MODE, distinctivenessLabels, relatedClassSuggestions, trademarkResultMetrics } from "@/lib/trademarks/presentation";
 import type { TrademarkAnalysisRequest, TrademarkHistoryItem, TrademarkOverallStatus, TrademarkResult } from "@/lib/trademarks/types";
 import { useLanguage } from "./language-provider";
@@ -44,6 +44,7 @@ export function TrademarkSearchWorkspace({ inventions, initialInventionId, initi
   const [message, setMessage] = useState(initialError ?? "");
   const [error, setError] = useState(Boolean(initialError));
   const [pending, startTransition] = useTransition();
+  const [classMismatch, setClassMismatch] = useState<ClassMismatchWarning | null>(null);
   const [historyQuery, setHistoryQuery] = useState("");
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>("ALL");
   const [historyPage, setHistoryPage] = useState(1);
@@ -65,6 +66,7 @@ export function TrademarkSearchWorkspace({ inventions, initialInventionId, initi
     setResult(null);
     setMessage("");
     setTab("OVERVIEW");
+    setClassMismatch(null);
   }
 
   function useInventionDetails() {
@@ -75,8 +77,14 @@ export function TrademarkSearchWorkspace({ inventions, initialInventionId, initi
     setError(false);
   }
 
-  function runAnalysis(name = form.brandName) {
+  function runAnalysis(name = form.brandName, classConfirmed = false) {
     if (pending) return;
+    const mismatch = detectStrongClassMismatch(classContext, form.niceClass);
+    if (!classConfirmed && mismatch) {
+      setClassMismatch(mismatch);
+      return;
+    }
+    setClassMismatch(null);
     setMessage("");
     setError(false);
     const request = { ...form, brandName: name };
@@ -148,7 +156,7 @@ export function TrademarkSearchWorkspace({ inventions, initialInventionId, initi
       </div>
 
       <NiceClassExplanation t={t} />
-      <TrademarkClassGuide context={classContext} selectedClass={form.niceClass} onSelect={(value) => update("niceClass", value)} disabled={pending} />
+      <div id="trademark-class-suggestions" tabIndex={-1}><TrademarkClassGuide context={classContext} selectedClass={form.niceClass} onSelect={(value) => { update("niceClass", value); setClassMismatch(null); }} disabled={pending} /></div>
 
       <div className="trademark-form-grid">
         {mode === "ADVANCED" && <NiceClassSelector value={form.niceClass} onChange={(value) => update("niceClass", value)} disabled={pending} />}
@@ -161,6 +169,7 @@ export function TrademarkSearchWorkspace({ inventions, initialInventionId, initi
         </>}
       </div>
       <div className="trademark-analyse-row"><div><b>Class {classData.number}</b><span>{classData.heading}</span></div><button type="button" className="trademark-primary-button" onClick={() => runAnalysis()} disabled={pending || form.brandName.trim().length < 2}>{pending && <span className="auth-spinner" aria-hidden="true" />}{pending ? t("trademarks.loading") : t("trademarks.analyse")}</button></div>
+      {classMismatch && <aside className="trademark-class-mismatch" role="alert" aria-labelledby="trademark-class-mismatch-title"><strong id="trademark-class-mismatch-title">{classMismatch.message}</strong><p>{classMismatch.explanation}</p><small>Confirm the class that should be analysed. This guidance is not legal advice.</small><div><button type="button" onClick={() => { update("niceClass", resolveClassMismatchDecision(classMismatch, "SWITCH")); setClassMismatch(null); }}>Switch to suggested Class {classMismatch.suggestedClass}</button><button type="button" className="trademark-primary-button" onClick={() => runAnalysis(form.brandName, true)}>Continue with Class {resolveClassMismatchDecision(classMismatch, "CONTINUE")}</button><button type="button" onClick={() => document.getElementById("trademark-class-suggestions")?.focus()}>Review other suggestions</button></div></aside>}
       {message && <p className={`trademark-message ${error ? "error" : "success"}`} role={error ? "alert" : "status"}>{message}</p>}
     </section>
 

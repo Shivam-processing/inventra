@@ -6,7 +6,7 @@ import { findMatchingSchemes } from "@/app/dashboard/grants/actions";
 import { GrantCard } from "@/components/grant-card";
 import { useLanguage } from "@/components/language-provider";
 import { filterGrantMatches, type GrantFilter } from "@/lib/grants/filters";
-import { applicantProfileCompleteness, directGrantSummary, recalculateCuratedForApplicant, summarizeMatches, topGrantMatches } from "@/lib/grants/matcher";
+import { applicantProfileCompleteness, directGrantSummary, summarizeMatches, topGrantMatches } from "@/lib/grants/matcher";
 import type { ApplicantProfile, GrantSearchResult, InventionDomain } from "@/lib/grants/types";
 import type { MessageKey } from "@/lib/i18n/messages/en";
 
@@ -32,6 +32,7 @@ export function GrantFinder({ inventions, initialInventionId, liveEnabled }: { i
   const [filter, setFilter] = useState<GrantFilter>("all");
   const [schemeQuery, setSchemeQuery] = useState("");
   const [liveSearched, setLiveSearched] = useState(false);
+  const [resultOutdated, setResultOutdated] = useState(false);
   const [pendingMode, setPendingMode] = useState<"curated" | "live" | null>(null);
   const [lastRequest, setLastRequest] = useState<"curated" | "live">("curated");
   const [pending, startTransition] = useTransition();
@@ -45,12 +46,12 @@ export function GrantFinder({ inventions, initialInventionId, liveEnabled }: { i
   const completeness = applicantProfileCompleteness(applicant);
   const filtersActive = filter !== "all" || schemeQuery.trim().length > 0;
 
-  function selectInvention(id: string) { setSelectedId(id); setResult(null); setError(null); setFilter("all"); setSchemeQuery(""); setLiveSearched(false); }
+  function selectInvention(id: string) { setSelectedId(id); setResult(null); setResultOutdated(false); setError(null); setFilter("all"); setSchemeQuery(""); setLiveSearched(false); }
   function updateApplicant<K extends keyof ApplicantProfile>(key: K, value: ApplicantProfile[K]) {
     const next = { ...applicant, [key]: value };
     setApplicant(next);
     setLiveSearched(false);
-    if (result) setResult({ ...recalculateCuratedForApplicant(result, next), notice: t("grants.notice.profileChanged") });
+    if (result) setResultOutdated(true);
   }
   function toggleSupport(value: string) { const next = value === "any" ? ["any"] : applicant.supportTypes.filter((item) => item !== "any").includes(value) ? applicant.supportTypes.filter((item) => item !== value) : [...applicant.supportTypes.filter((item) => item !== "any"), value]; updateApplicant("supportTypes", next.length ? next : ["any"]); }
   function submit() {
@@ -58,14 +59,14 @@ export function GrantFinder({ inventions, initialInventionId, liveEnabled }: { i
     setError(null);
     setPendingMode("curated");
     setLastRequest("curated");
-    startTransition(async () => { try { const response = await findMatchingSchemes({ inventionId: selectedId, applicant, includeLive: false }); if (response.ok) { setResult(response.result); setLiveSearched(false); } else setError(response.error); } catch { setError(t("errors.generic")); } finally { setPendingMode(null); } });
+    startTransition(async () => { try { const response = await findMatchingSchemes({ inventionId: selectedId, applicant, includeLive: false }); if (response.ok) { setResult(response.result); setResultOutdated(false); setLiveSearched(false); } else setError(response.error); } catch { setError(t("errors.generic")); } finally { setPendingMode(null); } });
   }
   function searchLive() {
     if (!selectedId || pending || !liveEnabled) return;
     setError(null);
     setPendingMode("live");
     setLastRequest("live");
-    startTransition(async () => { try { const response = await findMatchingSchemes({ inventionId: selectedId, applicant, includeLive: true }); if (response.ok) { setResult(response.result); setLiveSearched(true); } else setError(response.error); } catch { setError(t("errors.generic")); } finally { setPendingMode(null); } });
+    startTransition(async () => { try { const response = await findMatchingSchemes({ inventionId: selectedId, applicant, includeLive: true }); if (response.ok) { setResult(response.result); setResultOutdated(false); setLiveSearched(true); } else setError(response.error); } catch { setError(t("errors.generic")); } finally { setPendingMode(null); } });
   }
 
   return <div className="grants-page">
@@ -85,8 +86,9 @@ export function GrantFinder({ inventions, initialInventionId, liveEnabled }: { i
     {error && <div className="grant-notice error" role="alert">{error}<button type="button" onClick={lastRequest === "live" ? searchLive : submit}>{t("common.retry")}</button></div>}
     {pending && <div className="grant-loading" role="status"><span className="spinner" /><strong>{pendingMode === "live" ? t("grants.liveLoading") : t("grants.loading")}</strong><i /><i /><i /></div>}
     {result && !pending && <section className="grant-results" aria-live="polite">
+      {resultOutdated && <div className="grant-notice error" role="status">{t("grants.notice.profileChanged")}</div>}
       {result.notice && <div className="grant-notice">{result.notice}</div>}
-      <header className="grant-results-heading"><span className="eyebrow">{t("grants.resultsEyebrow")}</span><h2>{t("grants.resultsTitle")}</h2><p>{result.liveCheckedAt ? t("grants.checkedSources", { date: new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(result.liveCheckedAt)) }) : t("grants.curatedOnly")}</p></header>
+      <header className="grant-results-heading"><span className="eyebrow">{t("grants.resultsEyebrow")}</span><h2>{t("grants.resultsTitle")}</h2><p>{result.liveCheckedAt ? t("grants.checkedSources", { date: new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(result.liveCheckedAt)) }) : t("grants.curatedOnly")}</p><p>{t("grants.profileMatchedAt", { date: new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(result.profileMatchedAt)) })}</p></header>
       <aside className={`grant-provider-panel ${liveEnabled ? "enabled" : "disabled"}`}><div><strong>{liveEnabled ? t("grants.providerEnabled") : t("grants.providerDisabled")}</strong><p>{liveEnabled ? t("grants.providerDescription") : t("grants.providerDisabledDescription")}</p></div>{liveEnabled && <button type="button" className="button" onClick={searchLive} disabled={pending}>{t("grants.searchLatest")}</button>}</aside>
       <div className="grant-summary-grid"><article><small>{t("grants.highMatches")}</small><strong>{summary.high}</strong></article><article><small>{t("grants.directOpportunities")}</small><strong>{summary.directGrants}</strong></article><article><small>{t("grants.creditOpportunities")}</small><strong>{summary.loansGuarantees}</strong></article><article><small>{t("grants.incubationOpportunities")}</small><strong>{summary.incubationFellowships}</strong></article><article><small>{t("grants.ipOpportunities")}</small><strong>{summary.ipSupport}</strong></article>{grantCeiling.total > 0 && <article className="grant-ceiling"><small>{t("grants.ceilingSum")}</small><strong>{money(grantCeiling.total)}</strong><span>{t(grantCeiling.programmes === 1 ? "grants.ceilingOne" : "grants.ceilingMany", { count: grantCeiling.programmes })}</span></article>}</div>
       <p className="grant-category-overlap">{t("grants.categoryOverlap")}</p>

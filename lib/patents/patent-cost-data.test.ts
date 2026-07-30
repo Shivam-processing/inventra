@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { getPatentCostEstimate, totalRange } from "./patent-cost-data";
+import { getPatentCostEstimate, normalizeDrawingCount, totalRange } from "./patent-cost-data";
 
 describe("India patent-cost estimates", () => {
   it("changes excess-claim fees from claim 11", () => {
@@ -28,5 +28,21 @@ describe("India patent-cost estimates", () => {
     assert.equal(estimate.governmentBreakdown?.filingFee, 8000);
     assert.equal(estimate.governmentBreakdown?.examinationFee, 20000);
     assert.equal(estimate.governmentBreakdown?.excessClaimFee, 1600);
+  });
+  it("adds professional drawing preparation without fabricating a government fee", () => {
+    const zero = getPatentCostEstimate("india", "individual", "complete", 10, 0);
+    const three = getPatentCostEstimate("india", "individual", "complete", 10, 3);
+    assert.deepEqual(zero.drawingPreparation, { minimum: 0, maximum: 0 });
+    assert.deepEqual(three.drawingPreparation, { minimum: 4500, maximum: 12000 });
+    assert.deepEqual(three.government, zero.government);
+    assert.equal(three.professional.minimum - zero.professional.minimum, 4500);
+  });
+  it("normalizes drawing limits independently from claims", () => {
+    assert.equal(normalizeDrawingCount(-2), 0);
+    assert.equal(normalizeDrawingCount(101), 100);
+    const estimate = getPatentCostEstimate("india", "individual", "provisional", 12, 3);
+    assert.equal(estimate.governmentBreakdown?.futureExcessClaimFee, 640);
+    assert.equal(estimate.drawingCount, 3);
+    assert.equal(estimate.government.minimum, 1600);
   });
 });

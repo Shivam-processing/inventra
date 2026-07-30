@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { parseClarificationState } from "@/lib/ai/clarification";
 import { selectLatestCompletedPatentSearch } from "@/lib/patents/feature-comparison";
+import { createPatentDraftFigures } from "@/lib/patents/patent-draft-drawings";
 import {
   MockPatentDraftProvider,
   MOCK_PATENT_DRAFT_PROVIDER,
@@ -33,6 +34,7 @@ const saveSchema = z.object({
     problemStatement: sectionSchema,
     summaryOfInvention: sectionSchema,
     detailedDescription: sectionSchema,
+    briefDescriptionOfDrawings: sectionSchema,
     essentialFeatures: sectionSchema,
     exampleImplementation: sectionSchema,
     preliminaryClaims: sectionSchema,
@@ -227,6 +229,13 @@ export async function generatePatentDraft(
   try {
     const analysis = record(invention.ai_analysis);
     const clarification = parseClarificationState(invention.clarification_questions);
+    const { data: imageRows, error: imageError } = await supabase
+      .from("invention_images")
+      .select("id,image_type")
+      .eq("invention_id", invention.id)
+      .eq("user_id", userId)
+      .order("id", { ascending: true });
+    if (imageError) throw new Error("image_metadata_unavailable");
     const input: PatentDraftInput = {
       title: typeof analysis.suggestedTitle === "string" ? analysis.suggestedTitle : invention.title,
       problemStatement: invention.problem_statement,
@@ -242,6 +251,7 @@ export async function generatePatentDraft(
       patentResults: patentResults(patentSearch.results),
       overlapSummary: overlapSummary(overlapReport.summary),
       overlapMatches: overlapMatches(overlapReport.feature_matches),
+      figures: createPatentDraftFigures((imageRows ?? []).map((image) => typeof image.image_type === "string" ? image.image_type : "Other")),
     };
     const generatedResult = saveSchema.shape.sections.safeParse(
       await new MockPatentDraftProvider().generate(input),

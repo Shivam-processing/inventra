@@ -75,6 +75,7 @@ export type ClassifiedProfile = { domains: InventionDomain[]; evidence: Partial<
 export type GrantMatch = {
   scheme: GovernmentScheme;
   score: number;
+  eligibilityScore: number;
   matchLevel: MatchLevel;
   eligibilityStatus: EligibilityStatus;
   matchedDomains: InventionDomain[];
@@ -97,4 +98,6 @@ export type GrantSearchResult = {
   liveEnabled: boolean;
   liveCheckedAt: string | null;
   notice: string | null;
+  inputHash: string;
+  profileMatchedAt: string;
 };

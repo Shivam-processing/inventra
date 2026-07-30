@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createPatentDraftFigures } from "@/lib/patents/patent-draft-drawings";
 import {
   createPatentDraftDocx,
   createPatentDraftPdf,
@@ -139,7 +140,28 @@ export async function POST(
     draftVersion: draft.version,
     savedAt: draft.updated_at,
     sections: sections.data,
+    figures: [],
   };
+
+  const { data: imageRows, error: imagesError } = await supabase
+    .from("invention_images")
+    .select("id,storage_path,image_type")
+    .eq("invention_id", invention.id)
+    .eq("user_id", userId)
+    .order("id", { ascending: true });
+  if (imagesError) return jsonError("The owned drawing metadata could not be loaded for export.", 500);
+  const figureMetadata = createPatentDraftFigures((imageRows ?? []).map((image) => typeof image.image_type === "string" ? image.image_type : "Other"));
+  exportData.figures = await Promise.all((imageRows ?? []).map(async (image, index) => {
+    const metadata = figureMetadata[index];
+    try {
+      const { data, error } = await supabase.storage.from("invention-images").download(image.storage_path);
+      const mimeType = data?.type === "image/png" || data?.type === "image/jpeg" ? data.type : null;
+      if (error || !data || !mimeType) return { ...metadata, data: null, mimeType: null };
+      return { ...metadata, data: new Uint8Array(await data.arrayBuffer()), mimeType };
+    } catch {
+      return { ...metadata, data: null, mimeType: null };
+    }
+  }));
 
   try {
     const bytes = params.data.format === "docx"

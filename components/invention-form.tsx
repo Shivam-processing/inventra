@@ -27,6 +27,8 @@ function YesNoField({ name, legend, hint, value, onChange, error }: { name: "pub
 export function InventionForm() {
   const [state, formAction, pending] = useActionState(createInvention, initialState);
   const submissionLocked = useRef(false);
+  const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
+  const descriptionSelection = useRef({ start: 0, end: 0 });
   const [values, setValues] = useState({
     title: "",
     problemStatement: "",
@@ -45,6 +47,14 @@ export function InventionForm() {
       return { ...current, description: `${current.description}${separator}${transcript}`.slice(0, 15000) };
     });
   }, []);
+  const replaceSelectedTranscript = useCallback((transcript: string) => {
+    setValues((current) => {
+      const { start, end } = descriptionSelection.current;
+      const next = `${current.description.slice(0, start)}${transcript}${current.description.slice(end)}`.slice(0, 15000);
+      return { ...current, description: next };
+    });
+    descriptionRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     if (!pending) submissionLocked.current = false;
@@ -59,8 +69,8 @@ export function InventionForm() {
       <div className="form-fields">
         <label><span>Invention title</span><input name="title" type="text" minLength={3} maxLength={160} required value={values.title} onChange={(event) => setValues({ ...values, title: event.target.value })} placeholder="e.g. Portable gravity-fed water purifier" /><FieldError state={state} field="title" /></label>
         <label><span>Problem statement</span><textarea name="problem_statement" minLength={20} maxLength={5000} required rows={4} value={values.problemStatement} onChange={(event) => setValues({ ...values, problemStatement: event.target.value })} placeholder="What problem does your invention solve, and who experiences it?" /><small>Focus on the unmet need rather than the solution.</small><FieldError state={state} field="problem_statement" /></label>
-        <div><VoiceRecorder initialLanguage={values.preferredLanguage} onLanguageChange={(preferredLanguage) => setValues((current) => ({ ...current, preferredLanguage }))} onTranscript={appendTranscript} /><FieldError state={state} field="preferred_language" /></div>
-        <label><span>Invention description</span><textarea name="invention_description" minLength={40} maxLength={15000} required rows={7} value={values.description} onChange={(event) => setValues({ ...values, description: event.target.value })} placeholder="Describe how the invention works, its main parts, and what makes it different." /><FieldError state={state} field="invention_description" /></label>
+        <div><VoiceRecorder initialLanguage={values.preferredLanguage} existingText={values.description} onLanguageChange={(preferredLanguage) => setValues((current) => ({ ...current, preferredLanguage }))} onTranscript={appendTranscript} onReplaceTranscript={replaceSelectedTranscript} /><FieldError state={state} field="preferred_language" /></div>
+        <label><span>Invention description</span><textarea ref={descriptionRef} name="invention_description" minLength={40} maxLength={15000} required rows={7} value={values.description} onSelect={(event) => { descriptionSelection.current = { start: event.currentTarget.selectionStart, end: event.currentTarget.selectionEnd }; }} onChange={(event) => setValues({ ...values, description: event.target.value })} placeholder="Describe how the invention works, its main parts, and what makes it different." /><FieldError state={state} field="invention_description" /></label>
         <label><span>What makes your invention different? <small>(Optional)</small></span><textarea name="novelty_description" minLength={20} maxLength={5000} rows={5} value={values.noveltyDescription} onChange={(event) => setValues({ ...values, noveltyDescription: event.target.value })} placeholder="Describe the technical differences you consider important." /><small>Describe the technical difference from existing products or methods. Avoid legal conclusions such as ‘this is patentable’.</small><FieldError state={state} field="novelty_description" /></label>
         <label><span>Initial claims or important boundaries <small>(Optional)</small></span><textarea name="claims_draft" maxLength={10000} rows={7} value={values.claimsDraft} onChange={(event) => setValues({ ...values, claimsDraft: event.target.value })} placeholder="1. An apparatus comprising…" /><small>Optional. Describe what parts or behaviour you believe should be protected. These can be refined later.</small><FieldError state={state} field="claims_draft" /></label>
         <label><span>Development stage</span><select name="development_stage" required value={values.developmentStage} onChange={(event) => setValues({ ...values, developmentStage: event.target.value })}><option value="" disabled>Select the current stage</option><option value="concept">Concept only</option><option value="prototype">Working prototype</option><option value="testing">Testing and refinement</option><option value="production">Production ready</option></select><FieldError state={state} field="development_stage" /></label>

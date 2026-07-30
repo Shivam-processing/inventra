@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useState } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import {
   updateInventionDetails,
   type InventionDetailsActionState,
@@ -55,6 +55,8 @@ export function InventionDetailsEditor({ details }: { details: EditableInvention
     return nextState;
   }, initialActionState);
   const [values, setValues] = useState(details);
+  const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
+  const descriptionSelection = useRef({ start: 0, end: 0 });
   const dirty = JSON.stringify(values) !== JSON.stringify(details);
   const technicalDirty = values.problemStatement !== details.problemStatement
     || values.inventionDescription !== details.inventionDescription
@@ -75,6 +77,13 @@ export function InventionDetailsEditor({ details }: { details: EditableInvention
       const separator = current.inventionDescription.length > 0 && !/\s$/.test(current.inventionDescription) ? " " : "";
       return { ...current, inventionDescription: `${current.inventionDescription}${separator}${transcript}`.slice(0, 15_000) };
     });
+  }, []);
+  const replaceSelectedTranscript = useCallback((transcript: string) => {
+    setValues((current) => {
+      const { start, end } = descriptionSelection.current;
+      return { ...current, inventionDescription: `${current.inventionDescription.slice(0, start)}${transcript}${current.inventionDescription.slice(end)}`.slice(0, 15000) };
+    });
+    descriptionRef.current?.focus();
   }, []);
 
   function beginEditing() {
@@ -117,8 +126,8 @@ export function InventionDetailsEditor({ details }: { details: EditableInvention
     <div className="form-fields">
       <label><span>Invention title</span><input name="title" type="text" minLength={3} maxLength={160} required value={values.title} onChange={(event) => setValues({ ...values, title: event.target.value })} disabled={pending} /></label>
       <label><span>Problem statement</span><textarea name="problem_statement" minLength={20} maxLength={5000} required rows={5} value={values.problemStatement} onChange={(event) => setValues({ ...values, problemStatement: event.target.value })} disabled={pending} /></label>
-      <VoiceRecorder initialLanguage={values.preferredLanguage} onLanguageChange={(preferredLanguage) => setValues((current) => ({ ...current, preferredLanguage }))} onTranscript={appendTranscript} />
-      <label><span>Proposed solution / invention description</span><textarea name="invention_description" minLength={40} maxLength={15000} required rows={8} value={values.inventionDescription} onChange={(event) => setValues({ ...values, inventionDescription: event.target.value })} disabled={pending} /></label>
+      <VoiceRecorder initialLanguage={values.preferredLanguage} existingText={values.inventionDescription} onLanguageChange={(preferredLanguage) => setValues((current) => ({ ...current, preferredLanguage }))} onTranscript={appendTranscript} onReplaceTranscript={replaceSelectedTranscript} />
+      <label><span>Proposed solution / invention description</span><textarea ref={descriptionRef} name="invention_description" minLength={40} maxLength={15000} required rows={8} value={values.inventionDescription} onSelect={(event) => { descriptionSelection.current = { start: event.currentTarget.selectionStart, end: event.currentTarget.selectionEnd }; }} onChange={(event) => setValues({ ...values, inventionDescription: event.target.value })} disabled={pending} /></label>
       <label><span>What makes your invention different? <small>(Optional)</small></span><textarea name="novelty_description" minLength={20} maxLength={5000} rows={6} value={values.noveltyDescription} onChange={(event) => setValues({ ...values, noveltyDescription: event.target.value })} disabled={pending} placeholder="Describe only the technical differences you consider important." /><small>Describe the technical difference from existing products or methods. Avoid legal conclusions such as ‘this is patentable’.</small></label>
       <label><span>Initial claims or important boundaries <small>(Optional)</small></span><textarea name="claims_draft" maxLength={10000} rows={8} value={values.claimsDraft} onChange={(event) => setValues({ ...values, claimsDraft: event.target.value })} disabled={pending} placeholder="1. An apparatus comprising…" /><small>Optional. Describe what parts or behaviour you believe should be protected. These can be refined later.</small></label>
       <label><span>Development stage</span><select name="development_stage" value={values.developmentStage} onChange={(event) => setValues({ ...values, developmentStage: event.target.value as EditableInventionDetails["developmentStage"] })} disabled={pending}><option value="concept">Concept only</option><option value="prototype">Working prototype</option><option value="testing">Testing and refinement</option><option value="production">Production ready</option></select></label>

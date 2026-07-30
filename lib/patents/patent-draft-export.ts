@@ -5,6 +5,7 @@ import {
   Document as DocxDocument,
   Footer,
   HeadingLevel,
+  ImageRun,
   Packer,
   PageNumber,
   Paragraph,
@@ -27,6 +28,7 @@ export const savedPatentDraftSectionsSchema = z.object({
   problemStatement: requiredSection,
   summaryOfInvention: requiredSection,
   detailedDescription: requiredSection,
+  briefDescriptionOfDrawings: requiredSection.optional().default("No drawings supplied"),
   essentialFeatures: requiredSection,
   exampleImplementation: requiredSection,
   preliminaryClaims: requiredSection,
@@ -42,6 +44,13 @@ export type PatentDraftExportData = {
   draftVersion: number;
   savedAt: string;
   sections: PatentDraftSections;
+  figures: Array<{
+    figureNumber: number;
+    imageType: string;
+    caption: string;
+    data: Uint8Array | null;
+    mimeType: "image/jpeg" | "image/png" | null;
+  }>;
 };
 
 const exportedSections: Array<[keyof PatentDraftSections, string]> = [
@@ -50,6 +59,7 @@ const exportedSections: Array<[keyof PatentDraftSections, string]> = [
   ["problemStatement", "Problem statement"],
   ["summaryOfInvention", "Summary of the invention"],
   ["detailedDescription", "Detailed description"],
+  ["briefDescriptionOfDrawings", "Brief description of drawings"],
   ["essentialFeatures", "Essential features"],
   ["exampleImplementation", "Example implementation"],
   ["preliminaryClaims", "Preliminary claims"],
@@ -105,6 +115,7 @@ export async function createPatentDraftDocx(data: PatentDraftExportData) {
   ];
 
   for (const [key, label] of exportedSections) {
+    if (key === "briefDescriptionOfDrawings" && (!data.figures.length || data.sections[key] === "No drawings supplied")) continue;
     children.push(new Paragraph({
       heading: HeadingLevel.HEADING_1,
       keepNext: true,
@@ -112,6 +123,19 @@ export async function createPatentDraftDocx(data: PatentDraftExportData) {
       spacing: { before: 300, after: 140 },
     }));
     children.push(...docxBodyParagraphs(data.sections[key]));
+  }
+
+  if (data.figures.length) {
+    children.push(new Paragraph({ heading: HeadingLevel.HEADING_1, keepNext: true, children: [new TextRun({ text: "Drawing appendix", bold: true, font: "Arial", size: 28, color: "0B3D36" })], spacing: { before: 360, after: 160 } }));
+    for (const figure of data.figures) {
+      children.push(new Paragraph({ keepNext: true, children: [new TextRun({ text: `FIG. ${figure.figureNumber} — ${figure.imageType}`, bold: true, font: "Arial", size: 23, color: "102A43" })], spacing: { before: 220, after: 100 } }));
+      if (figure.data && figure.mimeType) {
+        children.push(new Paragraph({ children: [new ImageRun({ type: figure.mimeType === "image/png" ? "png" : "jpg", data: figure.data, transformation: { width: 430, height: 300 }, altText: { title: `FIG. ${figure.figureNumber}`, description: figure.caption, name: `Figure ${figure.figureNumber}` } })], spacing: { after: 100 } }));
+        children.push(...docxBodyParagraphs(figure.caption));
+      } else {
+        children.push(...docxBodyParagraphs(`FIG. ${figure.figureNumber} — Uploaded image unavailable in this export.`));
+      }
+    }
   }
 
   const document = new DocxDocument({
@@ -204,7 +228,30 @@ export async function createPatentDraftPdf(data: PatentDraftExportData) {
   document.moveDown(0.35).font("Helvetica-Bold").fontSize(10.5).fillColor("#243B53").text(PATENT_DRAFT_EXPORT_DISCLAIMER, { width: disclaimerWidth - 28, lineGap: 4 });
   document.y = disclaimerY + disclaimerHeight;
 
-  for (const [key, label] of exportedSections) writePdfSection(document, label, data.sections[key]);
+  for (const [key, label] of exportedSections) {
+    if (key === "briefDescriptionOfDrawings" && (!data.figures.length || data.sections[key] === "No drawings supplied")) continue;
+    writePdfSection(document, label, data.sections[key]);
+  }
+
+  if (data.figures.length) {
+    writePdfSection(document, "Drawing appendix", "Uploaded invention images are reproduced below with neutral figure captions.");
+    for (const figure of data.figures) {
+      ensurePdfSpace(document, 360);
+      document.font("Helvetica-Bold").fontSize(11.5).fillColor("#102A43").text(`FIG. ${figure.figureNumber} — ${figure.imageType}`);
+      document.moveDown(.5);
+      if (figure.data && figure.mimeType) {
+        try {
+          document.image(Buffer.from(figure.data), { fit: [470, 300], align: "center", valign: "center" });
+          document.moveDown(.6).font("Helvetica").fontSize(9.5).fillColor("#243B53").text(figure.caption, { lineGap: 3 });
+        } catch {
+          document.font("Helvetica").fontSize(9.5).fillColor("#64748B").text(`FIG. ${figure.figureNumber} — Uploaded image unavailable in this export.`);
+        }
+      } else {
+        document.font("Helvetica").fontSize(9.5).fillColor("#64748B").text(`FIG. ${figure.figureNumber} — Uploaded image unavailable in this export.`);
+      }
+      document.moveDown(1);
+    }
+  }
 
   const pageRange = document.bufferedPageRange();
   for (let index = 0; index < pageRange.count; index += 1) {

@@ -37,6 +37,7 @@ export function classifyInvention(context: InventionGrantContext): ClassifiedPro
     return [domain];
   });
   if (!domains.length) domains.push("GENERAL_INNOVATION");
-  const stage = /market|commercial|production|revenue/.test(source) ? "market_ready" : /pilot|testing|trial/.test(source) ? "pilot" : /prototype|proof of concept|\bpoc\b/.test(source) ? "prototype" : context.developmentStage || "idea";
+  const storedStage = context.developmentStage === "concept" ? "idea" : context.developmentStage;
+  const stage = /market|commercial|production|revenue/.test(source) ? "market_ready" : /pilot|testing|trial/.test(source) ? "pilot" : /prototype|proof of concept|\bpoc\b/.test(source) ? "prototype" : storedStage || "idea";
   return { domains: [...new Set(domains)], evidence, stage };
 }

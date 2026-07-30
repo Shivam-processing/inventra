@@ -10,6 +10,7 @@ import {
   JURISDICTIONS,
   PATENT_COST_DISCLAIMER,
   getPatentCostEstimate,
+  normalizeDrawingCount,
   totalRange,
   type ApplicantType,
   type CurrencyCode,
@@ -30,13 +31,14 @@ function range(value: FeeRange, currency: CurrencyCode) {
   return `${money(value.minimum, currency)}–${money(value.maximum, currency)}`;
 }
 
-export function PatentCostEstimator() {
+export function PatentCostEstimator({ initialDrawingCount = 0 }: { initialDrawingCount?: number }) {
   const [applicantType, setApplicantType] = useState<ApplicantType>("individual");
   const [claimCount, setClaimCount] = useState(10);
+  const [drawingCount, setDrawingCount] = useState(() => normalizeDrawingCount(initialDrawingCount));
   const [filingType, setFilingType] = useState<FilingType>("provisional");
   const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>(["india"]);
 
-  const estimates = useMemo(() => jurisdictions.map((jurisdiction) => getPatentCostEstimate(jurisdiction, applicantType, filingType, claimCount)), [applicantType, claimCount, filingType, jurisdictions]);
+  const estimates = useMemo(() => jurisdictions.map((jurisdiction) => getPatentCostEstimate(jurisdiction, applicantType, filingType, claimCount, drawingCount)), [applicantType, claimCount, drawingCount, filingType, jurisdictions]);
   const totals = useMemo(() => estimates.reduce<Partial<Record<CurrencyCode, FeeRange>>>((result, estimate) => {
     const current = result[estimate.currency] ?? { minimum: 0, maximum: 0 };
     const total = totalRange(estimate);
@@ -56,13 +58,14 @@ export function PatentCostEstimator() {
       <div className="cost-input-grid">
         <label><span>Applicant type</span><select value={applicantType} onChange={(event) => setApplicantType(event.target.value as ApplicantType)}>{APPLICANT_TYPES.map((type) => <option key={type} value={type}>{APPLICANT_LABELS[type]}</option>)}</select></label>
         <label><span>Number of claims</span><input type="number" min={1} max={100} value={claimCount} onChange={(event) => setClaimCount(Math.min(100, Math.max(1, Number(event.target.value) || 1)))} /><small>No excess-claim fee for the first 10 claims. The estimate changes from claim 11.</small></label>
+        <label><span>Number of drawings</span><input type="number" min={0} max={100} value={drawingCount} onChange={(event) => setDrawingCount(normalizeDrawingCount(Number(event.target.value)))} /><small>Count the drawing sheets or figures expected in the application. Official treatment varies by jurisdiction.</small></label>
         <label><span>Filing type</span><select value={filingType} onChange={(event) => setFilingType(event.target.value as FilingType)}>{FILING_TYPES.map((type) => <option key={type} value={type}>{FILING_LABELS[type]}</option>)}</select></label>
       </div>
       <fieldset><legend>Jurisdictions</legend><div className="jurisdiction-options">{JURISDICTIONS.map((jurisdiction) => <label key={jurisdiction} className={jurisdictions.includes(jurisdiction) ? "selected" : ""}><input type="checkbox" checked={jurisdictions.includes(jurisdiction)} onChange={() => toggleJurisdiction(jurisdiction)} /><span>{JURISDICTION_LABELS[jurisdiction]}</span></label>)}</div><small>At least one jurisdiction remains selected.</small></fieldset>
     </section>
 
     <section className="cost-results" aria-live="polite" aria-labelledby="cost-results-heading">
-      <div className="cost-results-heading"><div><p className="cost-kicker">APPROXIMATE ESTIMATES</p><h2 id="cost-results-heading">Estimated filing costs</h2></div><span>{claimCount} claim{claimCount === 1 ? "" : "s"} · {FILING_LABELS[filingType]}</span></div>
+      <div className="cost-results-heading"><div><p className="cost-kicker">APPROXIMATE ESTIMATES</p><h2 id="cost-results-heading">Estimated filing costs</h2></div><span>{claimCount} claim{claimCount === 1 ? "" : "s"} · {drawingCount} drawing{drawingCount === 1 ? "" : "s"} · {FILING_LABELS[filingType]}</span></div>
       <div className="currency-totals">{Object.entries(totals).map(([currency, value]) => <div key={currency}><span>{currency} total</span><strong>{range(value, currency as CurrencyCode)}</strong></div>)}</div>
       <div className="estimate-grid">{estimates.map((estimate) => <EstimateCard key={estimate.jurisdiction} estimate={estimate} />)}</div>
     </section>
@@ -87,10 +90,12 @@ function EstimateCard({ estimate }: { estimate: PatentCostEstimate }) {
         <div><dt>Examination fee</dt><dd>{estimate.governmentBreakdown.examinationFee ? money(estimate.governmentBreakdown.examinationFee, estimate.currency) : "Not included yet"}</dd></div>
         <div className={estimate.governmentBreakdown.excessClaimFee || estimate.governmentBreakdown.futureExcessClaimFee ? "claim-fee-active" : ""}><dt>Excess-claim fee due now</dt><dd>{money(estimate.governmentBreakdown.excessClaimFee, estimate.currency)}</dd></div>
         <div><dt>Estimated professional fees</dt><dd>{range(estimate.professional, estimate.currency)}</dd></div>
+        <div><dt>Drawing preparation estimate</dt><dd>{range(estimate.drawingPreparation, estimate.currency)} <small>({estimate.drawingCount} drawing{estimate.drawingCount === 1 ? "" : "s"})</small></dd></div>
         <div><dt>Amount due now</dt><dd>{range(total, estimate.currency)}</dd></div>
         <div className={estimate.governmentBreakdown.futureExcessClaimFee ? "claim-fee-active" : ""}><dt>Possible later official fees</dt><dd>{money(estimate.governmentBreakdown.futureExaminationFee + estimate.governmentBreakdown.futureExcessClaimFee, estimate.currency)} <small>(examination and indicated excess claims)</small></dd></div>
       </dl>
-      : <dl className="fee-details"><div><dt>Government fees</dt><dd>{range(estimate.government, estimate.currency)}</dd></div><div><dt>Professional fees</dt><dd>{estimate.professional.maximum === 0 ? "Not included" : range(estimate.professional, estimate.currency)}</dd></div></dl>}
+      : <dl className="fee-details"><div><dt>Government fees</dt><dd>{range(estimate.government, estimate.currency)}</dd></div><div><dt>Professional fees</dt><dd>{estimate.professional.maximum === 0 ? "Not included" : range(estimate.professional, estimate.currency)}</dd></div><div><dt>Drawing preparation estimate</dt><dd>{range(estimate.drawingPreparation, estimate.currency)} <small>({estimate.drawingCount} drawing{estimate.drawingCount === 1 ? "" : "s"})</small></dd></div></dl>}
+    <p className="estimate-note">No separate statutory drawing fee included. The drawing amount is an approximate professional preparation allowance; user-supplied filing-ready drawings are not assumed.</p>
     <div className="timeline">{estimate.completeSpecificationDeadline && <p><strong>Complete specification deadline:</strong> {estimate.completeSpecificationDeadline}</p>}<p><strong>Estimated examination/grant process:</strong> {estimate.processingTime}</p><p><strong>Potential patent term:</strong> {estimate.patentTerm}</p><small>Processing time is not the duration of patent protection.</small></div>{estimate.note && <p className="estimate-note">{estimate.note}</p>}
   </article>;
 }

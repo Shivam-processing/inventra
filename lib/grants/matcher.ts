@@ -73,7 +73,7 @@ function nextActionForScheme(scheme: GovernmentScheme, missing: string[], unmet:
 
 export function matchScheme(scheme: GovernmentScheme, detected: ClassifiedProfile, applicant: ApplicantProfile, checkedAt = new Date().toISOString()): GrantMatch {
   const matchedDomains = scheme.preferredDomains.filter((domain) => detected.domains.includes(domain));
-  const stage = applicant.developmentStatus !== "not_sure" ? applicant.developmentStatus : detected.stage;
+  const stage = detected.stage;
   const matchedStages = scheme.preferredStages.includes(stage) ? [stage] : [];
   const applicantType = applicantKey(applicant.applicantType);
   const applicantFit = !applicantMismatch(scheme, applicantType);
@@ -85,39 +85,33 @@ export function matchScheme(scheme: GovernmentScheme, detected: ClassifiedProfil
   const broadOnly = matchedDomains.length > 0 && preciseMatches.length === 0;
   const domainScore = preciseMatches.length ? Math.min(25, 15 + (preciseMatches.length - 1) * 5 + Math.min(5, matchedDomains.length - preciseMatches.length)) : matchedDomains.length ? Math.min(12, 6 + matchedDomains.length * 2) : 0;
   const stageScore = matchedStages.length ? 20 : 5;
-  const applicantScore = applicant.applicantType === "not_sure" ? 5 : applicantFit ? 25 : 0;
-  const supportScore = supportFit ? 20 : 3;
-  const hasApplicationRoute = Boolean(scheme.officialPortal && scheme.applicationMethod && scheme.applicationMethod !== "Not stated on the official source");
-  const sourceScore = scheme.currentlyOpenStatus === "VERIFIED_OPEN" ? 10 : hasApplicationRoute ? 6 : 0;
-  let score = Math.min(100, domainScore + stageScore + applicantScore + supportScore + sourceScore);
-  if (scheme.id === "nidhi-prayas" && matchedDomains.includes("HARDWARE") && ["idea", "proof_of_concept", "prototype"].includes(stage)) score = Math.max(score, 79);
+  let score = Math.round((domainScore + stageScore) / 45 * 100);
+  if (scheme.id === "nidhi-prayas" && matchedDomains.includes("HARDWARE") && ["idea", "proof_of_concept", "prototype"].includes(stage)) score = Math.max(score, 92);
   if (scheme.programmeType === "INCUBATION_SUPPORT" && scheme.currentlyOpenStatus !== "VERIFIED_OPEN") score = Math.min(score, 84);
   if (scheme.programmeType === "FELLOWSHIP" && scheme.currentlyOpenStatus !== "VERIFIED_OPEN") score = Math.min(score, 79);
   if (scheme.programmeType === "IP_SUPPORT") score = Math.min(score, 69);
   if (scheme.programmeType === "COMPETITION" && scheme.currentlyOpenStatus !== "VERIFIED_OPEN") score = Math.min(score, 74);
   if (scheme.id === "birac-big" && !detected.domains.includes("BIOTECH")) score = Math.min(score, 24);
-  const completeness = applicantProfileCompleteness(applicant);
-  if (completeness.completed === 0) score = Math.min(score, 74);
-  if (hardUnknown.length === 1) score = Math.min(score, 69);
-  if (hardUnknown.length >= 2) score = Math.min(score, 59);
-  if (hardFailed.length || applicantMismatch(scheme, applicantType)) score = Math.min(score, 39);
   if (broadOnly) score = Math.min(score, 49);
-  if (!hasApplicationRoute && scheme.currentlyOpenStatus !== "VERIFIED_OPEN") score = Math.min(score, 84);
-  if (score > 90 && (domainScore < 20 || stageScore < 20 || supportScore < 20 || applicantScore < 25 || hardUnknown.length || hardFailed.length)) score = 90;
+  if (score > 90 && (domainScore < 20 || stageScore < 20)) score = 90;
   const matchLevel = score >= 75 ? "HIGH" : score >= 50 ? "MODERATE" : "EXPLORE";
   const additionalUnknown = extraUnknownRequirements(scheme, applicant);
   const missingRequirements = [...hardUnknown.map(({ item }) => item === "dpiit_yes" ? "DPIIT recognition status" : item === "incorporated_under_two_years_yes" ? "Whether the startup was incorporated within the programme age limit" : "Evidence of substantive biotechnology innovation"), ...additionalUnknown];
   const likelyUnmetRequirements = [...hardFailed.map(({ item }) => item === "dpiit_yes" ? "DPIIT recognition is currently marked No" : item === "incorporated_under_two_years_yes" ? "Startup age appears outside the stated limit" : "No substantive biotechnology evidence was detected"), ...(applicantMismatch(scheme, applicantType) ? [`The confirmed applicant type is not listed for ${scheme.name}`] : [])];
+  const completeness = applicantProfileCompleteness(applicant);
   const mostlyIncomplete = completeness.completed <= 1;
   const eligibilityStatus = likelyUnmetRequirements.length ? "LIKELY_NOT_ELIGIBLE" : mostlyIncomplete ? "INSUFFICIENT_INFORMATION" : missingRequirements.length ? "CHECK_REQUIREMENTS" : applicant.applicantType !== "not_sure" && applicantFit && hardUnknown.length === 0 && hardFailed.length === 0 ? "LIKELY_ELIGIBLE" : "CHECK_REQUIREMENTS";
   const matchedApplicantFactors = [applicantFit ? applicant.applicantType : "", supportFit ? `Requested support: ${applicant.supportTypes.join(", ")}` : ""].filter(Boolean);
   const likelySatisfiedRequirements = [matchedDomains.length ? `Domain fit: ${matchedDomains.join(", ")}` : "", matchedStages.length ? `Stage fit: ${stage}` : ""].filter(Boolean);
   const reason = schemeReason(scheme, detected, stage);
-  return { scheme, score, matchLevel, eligibilityStatus, matchedDomains, matchedStages, matchedApplicantFactors, missingRequirements, likelySatisfiedRequirements, likelyUnmetRequirements, reason, nextAction: nextActionForScheme(scheme, missingRequirements, likelyUnmetRequirements), citations: scheme.officialSources, checkedAt };
+  const eligibilityScore = likelyUnmetRequirements.length
+    ? 10
+    : Math.max(20, Math.min(100, Math.round(completeness.completed / completeness.total * 70) + (applicantFit ? 15 : 0) + (hardUnknown.length ? 0 : 15) - Math.min(30, missingRequirements.length * 5)));
+  return { scheme, score, eligibilityScore, matchLevel, eligibilityStatus, matchedDomains, matchedStages, matchedApplicantFactors, missingRequirements, likelySatisfiedRequirements, likelyUnmetRequirements, reason, nextAction: nextActionForScheme(scheme, missingRequirements, likelyUnmetRequirements), citations: scheme.officialSources, checkedAt };
 }
 
 export function rankSchemes(schemes: GovernmentScheme[], detected: ClassifiedProfile, applicant: ApplicantProfile, checkedAt?: string) {
-  return schemes.map((scheme) => matchScheme(scheme, detected, applicant, checkedAt)).sort((a, b) => b.score - a.score || b.matchedDomains.length - a.matchedDomains.length || a.scheme.programmeType.localeCompare(b.scheme.programmeType) || a.scheme.name.localeCompare(b.scheme.name));
+  return schemes.map((scheme) => matchScheme(scheme, detected, applicant, checkedAt)).sort((a, b) => (b.score + b.eligibilityScore * .25) - (a.score + a.eligibilityScore * .25) || b.score - a.score || b.matchedDomains.length - a.matchedDomains.length || a.scheme.programmeType.localeCompare(b.scheme.programmeType) || a.scheme.name.localeCompare(b.scheme.name));
 }
 
 export function sumDirectGrantCeilings(matches: GrantMatch[]) {

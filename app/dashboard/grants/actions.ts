@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { classifyInvention } from "@/lib/grants/classifier";
 import { CURATED_GOVERNMENT_SCHEMES } from "@/lib/grants/curated-schemes";
+import { createGrantInputHash } from "@/lib/grants/input-hash";
 import { rankSchemes } from "@/lib/grants/matcher";
 import { mergeCuratedAndLive } from "@/lib/grants/normalizer";
 import { discoverOfficialSchemes, GrantWebSearchError } from "@/lib/grants/openai-web-provider";
@@ -54,19 +55,21 @@ export async function findMatchingSchemes(rawInput: unknown): Promise<GrantFinde
   };
   const detectedProfile = classifyInvention(context);
   const checkedAt = new Date().toISOString();
+  const inputHash = createGrantInputHash(parsed.data.applicant as ApplicantProfile, context);
+  const resultMetadata = { inputHash, profileMatchedAt: checkedAt };
   const curatedMatches = rankSchemes(CURATED_GOVERNMENT_SCHEMES, detectedProfile, parsed.data.applicant as ApplicantProfile, checkedAt);
   const liveEnabled = (process.env.GRANT_SEARCH_PROVIDER ?? "curated") === "openai_web";
   const featuresNotice = context.approvedFeatures.length ? null : t("grants.notice.noFeatures");
-  if (!parsed.data.includeLive) return { ok: true, result: { curated: curatedMatches, live: [], needsVerification: [], detectedProfile, liveEnabled, liveCheckedAt: null, notice: featuresNotice } };
-  if (!liveEnabled) return { ok: true, result: { curated: curatedMatches, live: [], needsVerification: [], detectedProfile, liveEnabled: false, liveCheckedAt: null, notice: featuresNotice ?? t("grants.notice.curated") } };
-  if (!process.env.OPENAI_API_KEY) return { ok: true, result: { curated: curatedMatches, live: [], needsVerification: [], detectedProfile, liveEnabled: true, liveCheckedAt: null, notice: featuresNotice ?? t("grants.notice.notConfigured") } };
+  if (!parsed.data.includeLive) return { ok: true, result: { curated: curatedMatches, live: [], needsVerification: [], detectedProfile, liveEnabled, liveCheckedAt: null, notice: featuresNotice, ...resultMetadata } };
+  if (!liveEnabled) return { ok: true, result: { curated: curatedMatches, live: [], needsVerification: [], detectedProfile, liveEnabled: false, liveCheckedAt: null, notice: featuresNotice ?? t("grants.notice.curated"), ...resultMetadata } };
+  if (!process.env.OPENAI_API_KEY) return { ok: true, result: { curated: curatedMatches, live: [], needsVerification: [], detectedProfile, liveEnabled: true, liveCheckedAt: null, notice: featuresNotice ?? t("grants.notice.notConfigured"), ...resultMetadata } };
   try {
     const liveResult = await discoverOfficialSchemes(buildGrantSearchPrompt(context, parsed.data.applicant as ApplicantProfile));
     const rankedLive = rankSchemes(liveResult.schemes, detectedProfile, parsed.data.applicant as ApplicantProfile, liveResult.checkedAt);
     const merged = mergeCuratedAndLive(curatedMatches, rankedLive);
-    return { ok: true, result: { curated: merged.curated, live: merged.live, needsVerification: [], detectedProfile, liveEnabled: true, liveCheckedAt: liveResult.checkedAt, notice: featuresNotice ?? (liveResult.schemes.length ? null : t("grants.notice.noOfficial")) } };
+    return { ok: true, result: { curated: merged.curated, live: merged.live, needsVerification: [], detectedProfile, liveEnabled: true, liveCheckedAt: liveResult.checkedAt, notice: featuresNotice ?? (liveResult.schemes.length ? null : t("grants.notice.noOfficial")), ...resultMetadata } };
   } catch (error) {
     const notice = error instanceof GrantWebSearchError ? t("grants.notice.liveFailed") : t("grants.notice.liveUnavailable");
-    return { ok: true, result: { curated: curatedMatches, live: [], needsVerification: [], detectedProfile, liveEnabled: true, liveCheckedAt: null, notice } };
+    return { ok: true, result: { curated: curatedMatches, live: [], needsVerification: [], detectedProfile, liveEnabled: true, liveCheckedAt: null, notice, ...resultMetadata } };
   }
 }

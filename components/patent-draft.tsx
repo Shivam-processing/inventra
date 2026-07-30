@@ -35,6 +35,7 @@ const sectionLabels: Record<PatentDraftSectionKey, string> = {
   problemStatement: "Problem statement",
   summaryOfInvention: "Summary of the invention",
   detailedDescription: "Detailed description",
+  briefDescriptionOfDrawings: "Brief description of drawings",
   essentialFeatures: "Essential features",
   exampleImplementation: "Example implementation",
   preliminaryClaims: "Preliminary claims",
@@ -44,8 +45,9 @@ const sectionLabels: Record<PatentDraftSectionKey, string> = {
 function normalizeSections(value: unknown): PatentDraftSections | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const source = value as Record<string, unknown>;
-  if (!PATENT_DRAFT_SECTION_KEYS.every((key) => typeof source[key] === "string")) return null;
-  return Object.fromEntries(PATENT_DRAFT_SECTION_KEYS.map((key) => [key, source[key]])) as PatentDraftSections;
+  const legacyCompatible: Record<string, unknown> = { ...source, briefDescriptionOfDrawings: typeof source.briefDescriptionOfDrawings === "string" ? source.briefDescriptionOfDrawings : "No drawings supplied" };
+  if (!PATENT_DRAFT_SECTION_KEYS.every((key) => typeof legacyCompatible[key] === "string")) return null;
+  return Object.fromEntries(PATENT_DRAFT_SECTION_KEYS.map((key) => [key, legacyCompatible[key]])) as PatentDraftSections;
 }
 
 function savedTime(value: string): string {

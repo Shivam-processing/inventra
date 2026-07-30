@@ -176,3 +176,31 @@ export function suggestNiceClassesFromContext(context: string, primaryClass?: nu
   if (includes(text, /\b(education|training course|entertainment service)\b/)) add(41, "May apply when education, training or entertainment services are provided under the brand.", "STRONG_POSSIBILITY");
   return suggestions.slice(0, 5);
 }
+
+export type ClassMismatchWarning = {
+  selectedClass: number;
+  suggestedClass: number;
+  message: string;
+  explanation: string;
+};
+
+export function detectStrongClassMismatch(context: string, selectedClass: number): ClassMismatchWarning | null {
+  const suggestion = suggestNiceClassesFromContext(context, selectedClass).find((item) => item.confidence === "STRONG_POSSIBILITY");
+  if (!suggestion) return null;
+  if (suggestion.niceClass === 10 && selectedClass === 11) return {
+    selectedClass,
+    suggestedClass: 10,
+    message: "The selected class may not be the closest class for the supplied product.",
+    explanation: "Class 10 may be more relevant if the mark is used on a physical medical or medicine-dispensing apparatus. Class 11 generally covers lighting, heating, cooling, cooking and sanitary apparatus.",
+  };
+  return {
+    selectedClass,
+    suggestedClass: suggestion.niceClass,
+    message: "The selected class may not be the closest class for the supplied product.",
+    explanation: `${suggestion.reason} This is preliminary classification guidance, not legal advice.`,
+  };
+}
+
+export function resolveClassMismatchDecision(warning: ClassMismatchWarning, decision: "SWITCH" | "CONTINUE"): number {
+  return decision === "SWITCH" ? warning.suggestedClass : warning.selectedClass;
+}

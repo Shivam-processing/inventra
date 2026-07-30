@@ -16,6 +16,7 @@ import {
   overlapRiskLevel,
   strongestPatentMatch,
 } from "@/lib/reports/full-report-utils";
+import { uniqueSentences } from "@/lib/voice/transcript-review";
 
 Font.registerHyphenationCallback((word) => [word]);
 
@@ -29,7 +30,7 @@ export type FullReportData = {
   proposedSolution: string;
   noveltyDescription: string;
   clarificationAnswers: Array<{ question: string; answer: string }>;
-  images: Array<{ category: string; caption: string; dataUri: string | null }>;
+  images: Array<{ figureNumber: number; category: string; caption: string; dataUri: string | null }>;
   approvedFeatures: string[];
   featureSetVersion: number;
   patentResults: PatentSearchResult[];
@@ -146,9 +147,10 @@ function StatusText({ status }: { status: keyof typeof statusColors | "NOT_ASSES
 }
 
 const draftSections: Array<[keyof PatentDraftSections, string]> = [
-  ["title", "Title"], ["technicalField", "Technical field"], ["background", "Background"],
+  ["technicalField", "Technical field"], ["background", "Background"],
   ["problemStatement", "Problem statement"], ["summaryOfInvention", "Summary of the invention"],
-  ["detailedDescription", "Detailed description"], ["essentialFeatures", "Essential features"],
+  ["detailedDescription", "Detailed description"], ["briefDescriptionOfDrawings", "Brief description of drawings"],
+  ["essentialFeatures", "Essential features"],
   ["exampleImplementation", "Example implementation"], ["preliminaryClaims", "Preliminary claims"], ["abstract", "Abstract"],
 ];
 
@@ -159,6 +161,11 @@ export function FullReportDocument({ data }: { data: FullReportData }) {
   const extremes = overlapFeatureExtremes(data.overlapMatches);
   const nextSteps = deterministicNextSteps(data.overlapMatches);
   const patentAssessments = aggregatePatentAssessments(data.patentResults.map((patent) => patent.publicationNumber), data.overlapMatches, data.approvedFeatures.length);
+  const displayedDraftSections = {
+    ...data.draftSections,
+    summaryOfInvention: uniqueSentences(data.draftSections.summaryOfInvention, data.inventionDescription) || "See the saved invention description and essential features above.",
+    abstract: uniqueSentences(data.draftSections.abstract, data.inventionDescription),
+  };
 
   return <Document title={`${data.inventionTitle} — Inventra Patent Analysis Report`} author="Inventra" subject="Preliminary automated patent analysis report">
     <Page size="A4" style={[styles.page, styles.cover]}>
@@ -175,7 +182,7 @@ export function FullReportDocument({ data }: { data: FullReportData }) {
 
     <Page size="A4" style={styles.page}>
       <Text style={styles.sectionKicker}>REPORT NAVIGATION</Text><Text style={styles.h1}>Contents</Text>
-      {FULL_REPORT_CONTENT_DESTINATIONS.map(([label, destination]) => <Link key={destination} src={destination} style={styles.contentsLink}>{label}</Link>)}
+      {FULL_REPORT_CONTENT_DESTINATIONS.filter(([, destination]) => destination !== "#uploaded-images" || data.images.length > 0).map(([label, destination]) => <Link key={destination} src={destination} style={styles.contentsLink}>{label}</Link>)}
       <Footer reportCode={data.reportCode} />
     </Page>
 
@@ -196,8 +203,7 @@ export function FullReportDocument({ data }: { data: FullReportData }) {
         <View style={styles.column}><View style={styles.fact}><Text style={styles.factLabel}>OVERALL RISK</Text><Text style={styles.factValue}>{risk}</Text></View><View style={styles.fact}><Text style={styles.factLabel}>STRONGEST OBSERVED OVERLAP</Text><Text style={styles.factValue}>{extremes.strongest}</Text></View></View>
         <View style={styles.column}><View style={styles.fact}><Text style={styles.factLabel}>LOWEST OBSERVED OVERLAP</Text><Text style={styles.factValue}>{extremes.lowest}</Text></View><View style={styles.fact}><Text style={styles.factLabel}>CURRENT FEATURE SET</Text><Text style={styles.factValue}>Version {data.featureSetVersion}</Text></View></View>
       </View>
-      <Text style={styles.h2}>Deterministic next steps</Text>
-      {nextSteps.map((step, index) => <View key={step} style={styles.numberedRow}><Text style={styles.number}>{index + 1}</Text><Text style={styles.numberedText}>{step}</Text></View>)}
+      <View wrap={false}><Text style={styles.h2}>Deterministic next steps</Text>{nextSteps.map((step, index) => <View key={step} style={styles.numberedRow}><Text style={styles.number}>{index + 1}</Text><Text style={styles.numberedText}>{step}</Text></View>)}</View>
       <Footer reportCode={data.reportCode} />
     </Page>
 
@@ -206,31 +212,31 @@ export function FullReportDocument({ data }: { data: FullReportData }) {
       {[["Problem statement", data.problemStatement], ["Proposed solution", data.proposedSolution], ["Inventor-provided novelty description", data.noveltyDescription]].map(([label, value]) => <View key={label} style={{ marginBottom: 17 }}><Text style={styles.h2}>{label}</Text><Text style={styles.body}>{value || "Not provided"}</Text></View>)}
       <Text style={styles.h2}>Approved technical features — version {data.featureSetVersion}</Text>
       {data.approvedFeatures.length ? data.approvedFeatures.map((feature, index) => <View key={`${index}-${feature}`} style={styles.numberedRow}><Text style={styles.number}>{index + 1}</Text><Text style={styles.numberedText}>{feature}</Text></View>) : <Text style={styles.body}>Not provided</Text>}
-      <View id="clarification-answers"><Text style={styles.h2}>Clarification answers</Text>{data.clarificationAnswers.length ? data.clarificationAnswers.map((item, index) => <View key={`${index}-${item.question}`} style={styles.card} wrap={false}><Text style={styles.cardTitle}>{item.question}</Text><Text style={styles.body}>{item.answer}</Text></View>) : <Text style={styles.body}>No saved clarification answers.</Text>}</View>
+      <View id="clarification-answers"><Text style={styles.h2}>Clarification answers</Text>{data.clarificationAnswers.length ? data.clarificationAnswers.map((item, index) => <View key={`${index}-${item.question}`} style={styles.card}><Text style={styles.cardTitle}>{item.question}</Text><Text style={styles.body}>{item.answer}</Text></View>) : <Text style={styles.body}>No saved clarification answers.</Text>}</View>
       <Footer reportCode={data.reportCode} />
     </Page>
 
-    <Page size="A4" style={styles.page} wrap>
-      <View id="uploaded-images"><Text style={styles.sectionKicker}>03 / UPLOADED IMAGES</Text><Text style={styles.h1}>Uploaded images and sketches</Text></View>
-      {data.images.length ? data.images.map((image, index) => <View key={`${index}-${image.caption}`} style={styles.card} wrap={false}>{image.dataUri ? <Image src={image.dataUri} style={styles.image} /> : <View style={styles.imagePlaceholder}><Text>Image unavailable</Text></View>}<Text style={styles.cardTitle}>{image.caption}</Text><Text style={styles.cardMeta}>{image.category}</Text></View>) : <Text style={styles.body}>No uploaded images were available.</Text>}
+    {data.images.length > 0 && <Page size="A4" style={styles.page} wrap>
+      <View id="uploaded-images"><Text style={styles.sectionKicker}>03 / DRAWING APPENDIX</Text><Text style={styles.h1}>Drawing appendix</Text></View>
+      {data.images.map((image, index) => <View key={`${index}-${image.caption}`} style={styles.card} wrap={false}>{image.dataUri ? <Image src={image.dataUri} style={styles.image} /> : <View style={styles.imagePlaceholder}><Text>FIG. {image.figureNumber} — Uploaded image unavailable in this export.</Text></View>}<Text style={styles.cardTitle}>FIG. {image.figureNumber}</Text><Text style={styles.body}>{image.caption}</Text><Text style={styles.cardMeta}>{image.category}</Text></View>)}
       <Footer reportCode={data.reportCode} />
-    </Page>
+    </Page>}
 
     <Page size="A4" style={styles.page} wrap>
       <View id="prior-art"><Text style={styles.sectionKicker}>04 / PRIOR ART</Text><Text style={styles.h1}>Prior-art search results</Text></View>
       <View style={styles.table}>
-        <View style={[styles.tableRow, styles.tableHeader]}><Text style={styles.cellPublication}>Publication</Text><Text style={styles.cellTitle}>Patent title</Text><Text style={styles.cellApplicant}>Applicant</Text><Text style={styles.cellDate}>Date</Text><Text style={styles.cellStatus}>Relevance / match</Text></View>
+        <View style={[styles.tableRow, styles.tableHeader]} fixed><Text style={styles.cellPublication}>Publication</Text><Text style={styles.cellTitle}>Patent title</Text><Text style={styles.cellApplicant}>Applicant</Text><Text style={styles.cellDate}>Date</Text><Text style={styles.cellStatus}>Relevance / match</Text></View>
         {data.patentResults.map((patent) => { const status = strongestPatentMatch(patent.publicationNumber, data.overlapMatches, data.approvedFeatures.length); return <View key={patent.publicationNumber} style={styles.tableRow} wrap={false}><Text style={styles.cellPublication}>{patent.publicationNumber}</Text><Text style={styles.cellTitle}>{patent.title}</Text><Text style={styles.cellApplicant}>{patent.applicant ?? "Not provided"}</Text><Text style={styles.cellDate}>{patent.priorityDate ?? patent.publicationDate ?? "Not provided"}</Text><Text style={styles.cellStatus}>{typeof patent.relevanceScore === "number" ? `${patent.relevanceScore} / ` : ""}{status === "NOT_ASSESSED" ? "Not assessed" : status}</Text></View>; })}
       </View>
       <Text style={styles.h2}>Patent summaries</Text>
-      {data.patentResults.map((patent) => { const status = strongestPatentMatch(patent.publicationNumber, data.overlapMatches, data.approvedFeatures.length); return <View key={`card-${patent.publicationNumber}`} style={styles.card} wrap={false}><Text style={styles.cardTitle}>{patent.title}</Text><Text style={styles.cardMeta}>{patent.publicationNumber}  •  {patent.applicant ?? "Applicant not provided"}  •  {patent.priorityDate ?? patent.publicationDate ?? "Date not provided"}  •  Search relevance {patent.relevanceScore ?? "Not provided"}</Text><StatusText status={status} /><Text style={styles.body}>{abstractExcerpt(patent.abstract)}</Text></View>; })}
+      {data.patentResults.map((patent) => { const status = strongestPatentMatch(patent.publicationNumber, data.overlapMatches, data.approvedFeatures.length); return <View key={`card-${patent.publicationNumber}`} style={styles.card}><Text style={styles.cardTitle}>{patent.title}</Text><Text style={styles.cardMeta}>{patent.publicationNumber}  •  {patent.applicant ?? "Applicant not provided"}  •  {patent.priorityDate ?? patent.publicationDate ?? "Date not provided"}  •  Search relevance {patent.relevanceScore ?? "Not provided"}</Text><StatusText status={status} /><Text style={styles.body}>{abstractExcerpt(patent.abstract)}</Text></View>; })}
       <Footer reportCode={data.reportCode} />
     </Page>
 
     <Page size="A4" style={styles.page} wrap>
       <View id="feature-overlap"><Text style={styles.sectionKicker}>05 / FEATURE OVERLAP</Text><Text style={styles.h1}>Feature overlap analysis</Text></View>
       <View style={styles.summaryBox}><Text style={styles.cardTitle}>Methodology and limitations</Text><Text style={styles.body}>This report uses deterministic phrase and concept matching across stored patent titles and abstracts. It does not review full claims, prosecution history, legal status, equivalents, inventive step, or validity.</Text></View>
-      {data.overlapMatches.map((match, index) => <View key={`${index}-${match.feature}`} style={[styles.card, ...(match.matchType === "FULL" || match.matchType === "PARTIAL" ? [{ borderLeftWidth: 4, borderLeftColor: statusColors[match.matchType] }] : [])]} wrap={false}>
+      {data.overlapMatches.map((match, index) => <View key={`${index}-${match.feature}`} style={[styles.card, ...(match.matchType === "FULL" || match.matchType === "PARTIAL" ? [{ borderLeftWidth: 4, borderLeftColor: statusColors[match.matchType] }] : [])]}>
         <Text style={styles.cardTitle}>{index + 1}. {match.feature}</Text><Text style={styles.cardMeta}>{match.matchedPatentTitle ?? "No matched patent title"}  •  {match.publicationNumber ?? "Publication not provided"}</Text><StatusText status={match.matchType} />
         <Text style={styles.keyword}>Matched concepts: {match.matchedConcepts?.length ? match.matchedConcepts.join(", ") : "None recorded"}</Text><Text style={styles.keyword}>Missing concepts: {match.missingConcepts?.length ? match.missingConcepts.join(", ") : "None recorded"}</Text>
         <Text style={styles.body}>{match.explanation}</Text>
@@ -241,7 +247,7 @@ export function FullReportDocument({ data }: { data: FullReportData }) {
     <Page size="A4" style={styles.page} wrap>
       <View id="patent-draft"><Text style={styles.sectionKicker}>06 / SAVED PATENT DRAFT</Text><Text style={styles.h1}>Latest saved patent draft</Text></View>
       <View style={styles.draftMeta}><Text style={styles.draftMetaItem}>Draft v{data.draftVersion}</Text><Text style={styles.draftMetaItem}>Saved {formatDate(data.draftSavedAt)}</Text><Text style={styles.draftMetaItem}>Provider {data.providerName || "Not provided"}{data.providerVersion ? ` v${data.providerVersion}` : ""}</Text><Text style={styles.draftMetaItem}>Feature set v{data.featureSetVersion}</Text></View>
-      {draftSections.map(([key, label]) => <View key={key} style={styles.draftSection}><Text style={styles.draftHeading}>{label}</Text><Text style={styles.draftText}>{data.draftSections[key]}</Text></View>)}
+      {draftSections.filter(([key]) => key !== "briefDescriptionOfDrawings" || (data.images.length > 0 && displayedDraftSections[key] !== "No drawings supplied")).map(([key, label]) => <View key={key} style={styles.draftSection}><Text style={styles.draftHeading}>{label}</Text><Text style={styles.draftText}>{displayedDraftSections[key]}</Text></View>)}
       <Footer reportCode={data.reportCode} />
     </Page>
 
