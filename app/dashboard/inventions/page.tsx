@@ -24,7 +24,9 @@ const stageKeys: Record<string, MessageKey> = {
   production: "form.stageProduction",
 };
 
-export default async function InventionsPage() {
+export default async function InventionsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const query = await searchParams;
+  const patentWorkspaceRequested = query.intent === "patent-workspace";
   const locale = await getLocale();
   const t = createTranslator(locale);
   const supabase = await createClient();
@@ -36,11 +38,13 @@ export default async function InventionsPage() {
     .from("invention_cases")
     .select("id,title,development_stage,publicly_disclosed,previously_sold,previously_filed")
     .eq("user_id", userId)
-    .order("id", { ascending: false });
+    .order("updated_at", { ascending: false });
   const inventions = (data ?? []) as InventionCase[];
+  if (!error && patentWorkspaceRequested && inventions[0]) redirect(`/dashboard/inventions/${inventions[0].id}?section=overview`);
 
   return <DashboardShell>
     <div className="dashboard-heading"><div><p className="eyebrow">PRIVATE WORKSPACE</p><h1>{t("navigation.inventions")}</h1><p>Open an invention, continue its recommended workflow step, or permanently delete it.</p></div><ButtonLink href="/dashboard/inventions/new" size="large"><span aria-hidden="true">＋</span> {t("dashboard.newInvention")}</ButtonLink></div>
+    {patentWorkspaceRequested && inventions.length === 0 && <div className="selection-prompt" role="status"><strong>Select an invention to open the patent workspace</strong><p>Create your first invention record, then Inventra will guide you through analysis, feature review, prior-art search and drafting.</p></div>}
     <section className="projects-section inventions-index" aria-labelledby="inventions-heading">
       <div className="section-row"><div><h2 id="inventions-heading">{t("dashboard.title")}</h2><p>{t("dashboard.cases")}</p></div></div>
       {error ? <ErrorState title={t("dashboard.loadErrorTitle")} description={t("dashboard.loadErrorDescription")} /> : inventions.length === 0 ? <div className="dashboard-empty"><EmptyState title={t("dashboard.emptyTitle")} description={t("dashboard.emptyDescription")} /><ButtonLink href="/dashboard/inventions/new">{t("dashboard.createFirst")}</ButtonLink></div> : <div className="project-grid">

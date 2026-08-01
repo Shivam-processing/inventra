@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans, Geist_Mono } from "next/font/google";
 import { LanguageProvider } from "@/components/language-provider";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { localeConfig } from "@/lib/i18n/locales";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
 });
 
@@ -34,7 +34,7 @@ export default async function RootLayout({
     <html
       lang={config.htmlLang}
       dir={config.dir}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${dmSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body><LanguageProvider locale={locale}>{children}</LanguageProvider></body>
     </html>

@@ -6,7 +6,7 @@ import { createTranslator } from "@/lib/i18n/translate";
 export default async function AuthLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const t = createTranslator(await getLocale());
   return <main className="auth-page">
-    <div className="auth-topbar"><Link href="/" className="brand"><span>IN</span> Inventra</Link><LanguageSwitcher /></div>
+    <div className="auth-topbar"><Link href="/" className="brand"><span>IN</span> Inventra</Link><div className="auth-toolbar"><LanguageSwitcher /></div></div>
     <section className="auth-shell">
       <div className="auth-context" aria-hidden="true">
         <span>{t("auth.workspace")}</span>

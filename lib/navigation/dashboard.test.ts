@@ -1,17 +1,21 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { DASHBOARD_NAV_ITEMS, dashboardNavItemActive } from "./dashboard";
+import { DASHBOARD_NAV_GROUPS, DASHBOARD_NAV_ITEMS, dashboardNavItemActive } from "./dashboard";
 
 describe("dashboard navigation", () => {
   it("contains only implemented dashboard routes", () => {
     assert.deepEqual(DASHBOARD_NAV_ITEMS.map((item) => item.href), [
       "/dashboard",
       "/dashboard/inventions",
-      "/dashboard/manufacturing",
-      "/dashboard/grants",
-      "/dashboard/trademarks",
       "/dashboard/inventions/new",
+      "/dashboard/inventions?intent=patent-workspace",
+      "/dashboard/trademarks",
+      "/dashboard/grants",
+      "/dashboard/manufacturing",
+      "/dashboard/settings",
+      "/dashboard/help",
     ]);
+    assert.deepEqual(DASHBOARD_NAV_GROUPS.map((group) => group.id), ["invent", "protect", "grow", "account"]);
     assert.equal(DASHBOARD_NAV_ITEMS.some((item) => String(item.href) === "#"), false);
   });
 
@@ -19,7 +23,8 @@ describe("dashboard navigation", () => {
     assert.equal(dashboardNavItemActive("/dashboard", "/dashboard"), true);
     assert.equal(dashboardNavItemActive("/dashboard/inventions/new", "/dashboard/inventions/new"), true);
     assert.equal(dashboardNavItemActive("/dashboard/inventions/new", "/dashboard/inventions"), false);
-    assert.equal(dashboardNavItemActive("/dashboard/inventions/abc", "/dashboard/inventions"), true);
+    assert.equal(dashboardNavItemActive("/dashboard/inventions/abc", "/dashboard/inventions"), false);
+    assert.equal(dashboardNavItemActive("/dashboard/inventions/abc", "/dashboard/inventions?intent=patent-workspace"), true);
     assert.equal(dashboardNavItemActive("/dashboard/grants", "/dashboard/grants"), true);
     assert.equal(dashboardNavItemActive("/dashboard/manufacturing", "/dashboard/manufacturing"), true);
     assert.equal(dashboardNavItemActive("/dashboard/trademarks", "/dashboard/trademarks"), true);

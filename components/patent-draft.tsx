@@ -204,7 +204,7 @@ export function PatentDraftPanel({
 
   return <section className="patent-draft-section">
     <div className="patent-draft-toolbar">
-      <div><span className="patent-draft-icon" aria-hidden="true">▤</span><div><span className="eyebrow">MOCK PATENT DRAFT PROVIDER</span><h2>Editable patent draft</h2><p>Generate preliminary sections from the approved invention and completed review records.</p></div></div>
+      <div><span className="patent-draft-icon" aria-hidden="true">▤</span><div><span className="draft-provider-meta">Mock patent draft provider</span><h2>Editable patent draft</h2><p>Generate preliminary sections from the approved invention and completed review records.</p></div></div>
       {draft && <div className="draft-meta"><span className={`draft-status draft-status-${draft.status.toLowerCase()}`}>{draft.status === "COMPLETED" ? "Ready" : draft.status === "PROCESSING" ? "Generating" : "Failed"}</span><small>Version {draft.version}</small></div>}
     </div>
 
@@ -224,7 +224,7 @@ export function PatentDraftPanel({
     {!processing && !draft && <div className="patent-search-empty"><span>▤</span><div><strong>No patent draft generated</strong><p>Accept the acknowledgement and generate the first editable version.</p></div></div>}
 
     {!processing && complete && draft && editedSections && originalSections && <div className="draft-editor-layout">
-      <nav className="draft-section-nav" aria-label="Draft sections"><span>DRAFT SECTIONS</span>{PATENT_DRAFT_SECTION_KEYS.map((key, index) => <button type="button" className={activeSection === key ? "active" : undefined} aria-current={activeSection === key ? "page" : undefined} onClick={() => setActiveSection(key)} key={key}><small>{String(index + 1).padStart(2, "0")}</small>{sectionLabels[key]}</button>)}</nav>
+      <nav className="draft-section-nav" aria-label="Draft sections"><span>Draft sections</span>{PATENT_DRAFT_SECTION_KEYS.map((key, index) => <button type="button" className={activeSection === key ? "active" : undefined} aria-current={activeSection === key ? "page" : undefined} onClick={() => setActiveSection(key)} key={key}><small>{String(index + 1).padStart(2, "0")}</small>{sectionLabels[key]}</button>)}</nav>
       <form action={saveAction} className="draft-editor-form">
         <input type="hidden" name="invention_id" value={inventionId} />
         <input type="hidden" name="draft_id" value={draft.id} />

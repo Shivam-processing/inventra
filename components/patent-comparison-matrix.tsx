@@ -214,7 +214,7 @@ function PatentComparisonMatrixContent({
 
   return <section className="patent-comparison-matrix" aria-labelledby="patent-matrix-title">
     <header className="patent-matrix-heading">
-      <div><span className="patent-matrix-icon" aria-hidden="true">⊞</span><div><span className="eyebrow">DETERMINISTIC COMPARISON</span><h2 id="patent-matrix-title">Patent comparison matrix</h2><p>Compare each approved feature with up to five selected patent records.</p></div></div>
+      <div><span className="patent-matrix-icon" aria-hidden="true">⊞</span><div><span className="matrix-heading-meta">Preliminary feature comparison</span><h2 id="patent-matrix-title">Patent comparison matrix</h2><p>Compare each approved feature with up to five selected patent records.</p></div></div>
       <span className={stale ? "matrix-version stale" : "matrix-version"}>Feature set v{currentFeatureSetVersion}</span>
     </header>
 
@@ -241,7 +241,7 @@ function PatentComparisonMatrixContent({
           const selected = currentSelectedIds.includes(option.id);
           const disabled = !selected && currentSelectedIds.length >= 5;
           return <label className={selected ? "selected" : ""} aria-disabled={disabled} key={option.id}>
-            <input type="checkbox" checked={selected} disabled={disabled} onChange={(event) => togglePatent(option, event.target.checked)} />
+            <input type="checkbox" checked={selected} disabled={disabled} aria-label={`${selected ? "Selected" : "Not selected"}: ${option.patent.title}`} onChange={(event) => togglePatent(option, event.target.checked)} />
             <span aria-hidden="true">✓</span>
             <strong>{option.patent.title}</strong>
             <small>{option.patent.publicationNumber} · {extractPatentJurisdiction(option.patent.publicationNumber) ?? "Unknown"}</small>

@@ -23,6 +23,8 @@ export type TrademarkInventionOption = {
 type Tab = "OVERVIEW" | "VISUAL" | "PHONETIC" | "CONCEPTUAL" | "OFFICIAL" | "ALTERNATIVES" | "DOMAIN";
 type HistoryFilter = "ALL" | "LOWER_PRELIMINARY_RISK" | "POTENTIAL_CONFLICT" | "HIGH_PRELIMINARY_CONFLICT" | "INSUFFICIENT_VERIFICATION" | "LINKED";
 type FormMode = "GUIDED" | "ADVANCED";
+type TrademarkWorkspaceTab = "enter" | "similarity" | "official" | "alternatives" | "history";
+const workspaceTabs: Array<{ id: TrademarkWorkspaceTab; label: string }> = [{ id: "enter", label: "Enter name" }, { id: "similarity", label: "Similarity report" }, { id: "official", label: "Official verification" }, { id: "alternatives", label: "Alternatives" }, { id: "history", label: "History" }];
 const tabs: Tab[] = ["OVERVIEW", "VISUAL", "PHONETIC", "CONCEPTUAL", "OFFICIAL", "ALTERNATIVES", "DOMAIN"];
 const statusKey = (status: TrademarkOverallStatus) => `trademarks.status.${status}` as const;
 const initialForm: TrademarkAnalysisRequest = { inventionId: null, brandName: "", niceClass: 11, goodsServicesDescription: "", intendedMarket: "INDIA", languageMeaning: "", knownTranslations: "", additionalNotes: "" };
@@ -48,6 +50,7 @@ export function TrademarkSearchWorkspace({ inventions, initialInventionId, initi
   const [historyQuery, setHistoryQuery] = useState("");
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>("ALL");
   const [historyPage, setHistoryPage] = useState(1);
+  const [workspaceTab, setWorkspaceTab] = useState<TrademarkWorkspaceTab>("enter");
   const selected = inventions.find((item) => item.id === form.inventionId) ?? null;
   const classContext = selected?.classContext ?? `${plainCategory} ${form.goodsServicesDescription}`;
   const filteredHistory = history.filter((item) => item.brandName.toLowerCase().includes(historyQuery.trim().toLowerCase()) && (historyFilter === "ALL" || historyFilter === "LINKED" ? historyFilter !== "LINKED" || Boolean(item.inventionId) : item.overallStatus === historyFilter));
@@ -95,6 +98,7 @@ export function TrademarkSearchWorkspace({ inventions, initialInventionId, initi
       setResult(response.item.result);
       setHistory((current) => [response.item, ...current.filter((item) => item.id !== response.item.id)]);
       setTab("OVERVIEW");
+      setWorkspaceTab("similarity");
       setMessage(response.reused ? t("trademarks.reused") : t("trademarks.completed"));
     });
   }
@@ -131,21 +135,25 @@ export function TrademarkSearchWorkspace({ inventions, initialInventionId, initi
     if (!item.result) return;
     setResult(item.result);
     setTab("OVERVIEW");
+    setWorkspaceTab("similarity");
     document.querySelector(".trademark-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return <main className="trademark-page">
     <header className="trademark-hero"><p className="eyebrow">{t("trademarks.eyebrow")}</p><h1>{t("trademarks.title")}</h1><p>{t("trademarks.subtitle")}</p></header>
+    <div className="complex-page-help"><a href="/dashboard/help#trademarks">How do I use this page?</a></div>
+    <nav className="tool-tabs" aria-label="Trademark workspace sections"><div role="tablist">{workspaceTabs.map((item) => <button type="button" role="tab" aria-selected={workspaceTab === item.id} onClick={() => { setWorkspaceTab(item.id); if (item.id === "official") setTab("OFFICIAL"); if (item.id === "alternatives") setTab("ALTERNATIVES"); }} key={item.id}>{item.label}</button>)}</div><label>Section<select value={workspaceTab} onChange={(event) => { const next = event.target.value as TrademarkWorkspaceTab; setWorkspaceTab(next); if (next === "official") setTab("OFFICIAL"); if (next === "alternatives") setTab("ALTERNATIVES"); }}>{workspaceTabs.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}</select></label></nav>
     <aside className="trademark-legal-notice" role="note"><strong>{t("trademarks.preliminaryTool")}</strong><p>{t("trademarks.disclaimer")}</p><p>{t("trademarks.officialReminder")}</p></aside>
 
+    {workspaceTab === "enter" && <div role="tabpanel">
     <section className="trademark-panel">
-      <div className="trademark-section-heading"><span>01</span><div><h2>{t("trademarks.inventionContext")}</h2><p>{selected ? t("trademarks.linkedDescription") : t("trademarks.unlinkedDescription")}</p></div></div>
+      <div className="trademark-section-heading"><span>Step 1</span><div><h2>Choose an invention</h2><p>{selected ? t("trademarks.linkedDescription") : t("trademarks.unlinkedDescription")}</p></div></div>
       <label>{t("trademarks.selectInvention")}<select value={form.inventionId ?? ""} onChange={(event) => chooseInvention(event.target.value)} disabled={pending}><option value="">{t("trademarks.noInvention")}</option>{inventions.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
       {selected && <div className="trademark-invention-summary"><strong>{selected.title}</strong><span>{selected.developmentStage.replaceAll("_", " ")} · {formatDate(selected.updatedAt)}</span></div>}
     </section>
 
     <section className="trademark-panel">
-      <div className="trademark-section-heading"><span>02</span><div><h2>{t("trademarks.inputTitle")}</h2><p>{t("trademarks.inputDescription")}</p></div></div>
+      <div className="trademark-section-heading"><span>Step 2</span><div><h2>Enter the name and what you are selling</h2><p>{t("trademarks.inputDescription")}</p></div></div>
       <div className="trademark-mode-switch" role="group" aria-label={t("trademarks.formMode")}>
         <button type="button" aria-pressed={mode === "GUIDED"} onClick={() => setMode("GUIDED")}>{t("trademarks.guidedMode")}</button>
         <button type="button" aria-pressed={mode === "ADVANCED"} onClick={() => setMode("ADVANCED")}>{t("trademarks.advancedMode")}</button>
@@ -172,18 +180,20 @@ export function TrademarkSearchWorkspace({ inventions, initialInventionId, initi
       {classMismatch && <aside className="trademark-class-mismatch" role="alert" aria-labelledby="trademark-class-mismatch-title"><strong id="trademark-class-mismatch-title">{classMismatch.message}</strong><p>{classMismatch.explanation}</p><small>Confirm the class that should be analysed. This guidance is not legal advice.</small><div><button type="button" onClick={() => { update("niceClass", resolveClassMismatchDecision(classMismatch, "SWITCH")); setClassMismatch(null); }}>Switch to suggested Class {classMismatch.suggestedClass}</button><button type="button" className="trademark-primary-button" onClick={() => runAnalysis(form.brandName, true)}>Continue with Class {resolveClassMismatchDecision(classMismatch, "CONTINUE")}</button><button type="button" onClick={() => document.getElementById("trademark-class-suggestions")?.focus()}>Review other suggestions</button></div></aside>}
       {message && <p className={`trademark-message ${error ? "error" : "success"}`} role={error ? "alert" : "status"}>{message}</p>}
     </section>
+    </div>}
 
-    <OfficialVerificationPanel result={result} form={form} copy={copy} t={t} />
-    {result && <TrademarkResults result={result} tab={tab} setTab={setTab} selected={selected} pending={pending} saveName={saveName} analyseAlternative={analyseAlternative} updateName={(name) => update("brandName", name)} copy={copy} classContext={classContext} t={t} />}
+    {workspaceTab === "official" && <div role="tabpanel"><OfficialVerificationPanel result={result} form={form} copy={copy} t={t} />{result && <TrademarkResults result={result} tab="OFFICIAL" setTab={setTab} selected={selected} pending={pending} saveName={saveName} analyseAlternative={analyseAlternative} updateName={(name) => update("brandName", name)} copy={copy} classContext={classContext} t={t} />}</div>}
+    {workspaceTab === "similarity" && (result ? <TrademarkResults result={result} tab={tab === "OFFICIAL" || tab === "ALTERNATIVES" ? "OVERVIEW" : tab} setTab={setTab} selected={selected} pending={pending} saveName={saveName} analyseAlternative={analyseAlternative} updateName={(name) => update("brandName", name)} copy={copy} classContext={classContext} t={t} /> : <section className="tool-empty" role="tabpanel"><h2>No similarity report yet</h2><p>Enter a proposed name and describe what you are selling, then analyse the name.</p><button type="button" onClick={() => setWorkspaceTab("enter")}>Enter a name</button></section>)}
+    {workspaceTab === "alternatives" && (result ? <TrademarkResults result={result} tab="ALTERNATIVES" setTab={setTab} selected={selected} pending={pending} saveName={saveName} analyseAlternative={analyseAlternative} updateName={(name) => update("brandName", name)} copy={copy} classContext={classContext} t={t} /> : <section className="tool-empty" role="tabpanel"><h2>No alternatives generated</h2><p>Analyse a proposed name first to review preliminary alternatives.</p><button type="button" onClick={() => setWorkspaceTab("enter")}>Enter a name</button></section>)}
 
-    <section className="trademark-panel trademark-history">
+    {workspaceTab === "history" && <section className="trademark-panel trademark-history" role="tabpanel">
       {latestHistory && <div className="trademark-history-preview" data-testid="trademark-history-preview"><div><strong>{latestHistory.brandName}</strong><span>Class {latestHistory.niceClass}</span></div><div><span>{latestHistory.overallStatus ? t(statusKey(latestHistory.overallStatus)) : latestHistory.status}</span><time dateTime={latestHistory.createdAt}>{formatDate(latestHistory.createdAt)}</time></div><button type="button" disabled={!latestHistory.result} onClick={() => openHistoryReport(latestHistory)}>{t("trademarks.openReport")}</button></div>}
       <details><summary><span><b>{t("trademarks.historyTitle")}</b><small>{history.length} {history.length === 1 ? t("trademarks.historyEntry") : t("trademarks.historyEntries")}</small></span></summary>
         <div className="trademark-history-controls"><label>{t("trademarks.searchHistory")}<input type="search" value={historyQuery} onChange={(event) => { setHistoryQuery(event.target.value); setHistoryPage(1); }} /></label><label>{t("trademarks.filterHistory")}<select value={historyFilter} onChange={(event) => { setHistoryFilter(event.target.value as HistoryFilter); setHistoryPage(1); }}>{(["ALL","LOWER_PRELIMINARY_RISK","POTENTIAL_CONFLICT","HIGH_PRELIMINARY_CONFLICT","INSUFFICIENT_VERIFICATION","LINKED"] as const).map((item) => <option key={item} value={item}>{t(`trademarks.historyFilter.${item}`)}</option>)}</select></label></div>
         <div className="trademark-history-list">{paged.items.length ? paged.items.map((item) => <article key={item.id}><div><h3>{item.brandName}</h3><p>Class {item.niceClass} · {item.inventionTitle ?? t("trademarks.unlinked")}</p><small>{formatDate(item.createdAt)} · {item.provider} v{item.providerVersion}{item.olderProviderVersion ? ` · ${t("trademarks.olderVersion")}` : ""}</small></div><span>{item.overallStatus ? t(statusKey(item.overallStatus)) : item.status}</span><div><button type="button" disabled={!item.result} onClick={() => openHistoryReport(item)}>{t("trademarks.openReport")}</button><button type="button" onClick={() => { if (item.result) setForm((current) => ({ ...current, inventionId: item.inventionId && inventions.some((invention) => invention.id === item.inventionId) ? item.inventionId : current.inventionId, brandName: item.result!.input.originalName, niceClass: item.result!.input.niceClass, goodsServicesDescription: item.result!.input.goodsServicesDescription, intendedMarket: item.result!.input.intendedMarket })); window.scrollTo({ top: 0 }); }}>{t("trademarks.reanalyse")}</button><button type="button" onClick={() => removeHistory(item.id)}>{t("trademarks.delete")}</button></div></article>) : <p>{t("trademarks.noHistory")}</p>}</div>
         <div className="trademark-pagination"><button type="button" disabled={paged.page <= 1} onClick={() => setHistoryPage((page) => page - 1)}>{t("common.previous")}</button><span>{paged.page} / {paged.totalPages}</span><button type="button" disabled={paged.page >= paged.totalPages} onClick={() => setHistoryPage((page) => page + 1)}>{t("common.next")}</button></div><small>{t("trademarks.providerVersion", { version: providerVersion })}</small>
       </details>
-    </section>
+    </section>}
   </main>;
 }
 

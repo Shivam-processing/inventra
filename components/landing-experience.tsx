@@ -45,9 +45,9 @@ function AnalysisVisual() {
       <div className="schematic-toolbar"><span><i /> {t("status.inProgress")}</span><small>INV–0248</small></div>
       <svg viewBox="0 0 520 430" role="img" aria-label="Patent blueprint of a modular invention with connected feature nodes">
         <defs>
-          <linearGradient id="device-edge" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#22D3EE" /><stop offset="1" stopColor="#10b981" /></linearGradient>
-          <radialGradient id="device-core"><stop stopColor="#22D3EE" stopOpacity=".75" /><stop offset="1" stopColor="#3B82F6" stopOpacity="0" /></radialGradient>
-          <filter id="cyan-glow"><feGaussianBlur stdDeviation="5" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+          <linearGradient id="device-edge" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#D4603A" /><stop offset="1" stopColor="#2D7A4F" /></linearGradient>
+          <radialGradient id="device-core"><stop stopColor="#D4603A" stopOpacity=".32" /><stop offset="1" stopColor="#CA8A04" stopOpacity="0" /></radialGradient>
+          <filter id="cyan-glow"><feGaussianBlur stdDeviation="3" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
         </defs>
         <g className="schematic-links" fill="none">
           <path d="M159 142 L80 92" /><path d="M359 138 L442 82" /><path d="M374 280 L461 334" /><path d="M160 285 L64 342" />
@@ -58,7 +58,7 @@ function AnalysisVisual() {
           <path d="M193 146 L255 111 L326 145 L326 274 L259 313 L193 276 Z" />
           <path d="M193 146 L259 183 L326 145 M259 183 L259 313" opacity=".72" />
           <rect x="219" y="164" width="81" height="98" rx="22" />
-          <circle cx="260" cy="204" r="22" /><circle cx="260" cy="204" r="8" fill="#22D3EE" stroke="none" filter="url(#cyan-glow)" />
+          <circle cx="260" cy="204" r="22" /><circle cx="260" cy="204" r="8" fill="#D4603A" stroke="none" filter="url(#cyan-glow)" />
           <path d="M234 261 L217 282 M286 261 L304 282 M235 145 L235 119 M285 145 L285 119" opacity=".72" />
         </g>
         <g className="blueprint-marks" fill="#94A3B8"><text x="38" y="57">{t("landing.figure")}</text><text x="368" y="398">{t("landing.scale")}</text><text x="38" y="398">{t("landing.labMark")}</text></g>
@@ -72,21 +72,17 @@ function AnalysisVisual() {
 export function LandingExperience() {
   const { t } = useLanguage();
   const workflow = [
-    ["01", t("landing.stage.describe"), t("landing.stage.describeDetail")],
-    ["02", t("landing.stage.images"), t("landing.stage.imagesDetail")],
-    ["03", t("landing.stage.analysis"), t("landing.stage.analysisDetail")],
-    ["04", t("landing.stage.clarify"), t("landing.stage.clarifyDetail")],
-    ["05", t("landing.stage.search"), t("landing.stage.searchDetail")],
-    ["06", t("landing.stage.report"), t("landing.stage.reportDetail")],
-    ["07", t("landing.stage.draft"), t("landing.stage.draftDetail")],
-    ["08", t("landing.stage.download"), t("landing.stage.downloadDetail")],
-  ];
+    { id: "capture", number: "01", title: t("landing.phaseCapture"), description: t("landing.phaseCaptureDescription"), steps: [t("landing.stage.describe"), t("landing.stage.images")], output: t("landing.phaseCaptureOutput") },
+    { id: "understand", number: "02", title: t("landing.phaseUnderstand"), description: t("landing.phaseUnderstandDescription"), steps: [t("landing.stage.analysis"), t("landing.stage.clarify"), t("workflow.features")], output: t("landing.phaseUnderstandOutput") },
+    { id: "compare", number: "03", title: t("landing.phaseCompare"), description: t("landing.phaseCompareDescription"), steps: [t("landing.stage.search"), t("landing.stage.report")], output: t("landing.phaseCompareOutput") },
+    { id: "protect", number: "04", title: t("landing.phaseProtect"), description: t("landing.phaseProtectDescription"), steps: [t("landing.stage.draft"), t("landing.stage.download")], output: t("landing.phaseProtectOutput") },
+  ] as const;
   const reducedMotion = useReducedMotion();
   const spotlightX = useMotionValue(70);
   const spotlightY = useMotionValue(32);
   const smoothX = useSpring(spotlightX, { stiffness: 70, damping: 22 });
   const smoothY = useSpring(spotlightY, { stiffness: 70, damping: 22 });
-  const background = useTransform([smoothX, smoothY], ([x, y]) => `radial-gradient(620px circle at ${x}% ${y}%, rgba(34,211,238,.13), transparent 58%)`);
+  const background = useTransform([smoothX, smoothY], ([x, y]) => `radial-gradient(620px circle at ${x}% ${y}%, rgba(212,96,58,.10), transparent 58%)`);
 
   function moveSpotlight(event: PointerEvent<HTMLElement>) {
     if (reducedMotion || event.pointerType === "touch") return;
@@ -100,7 +96,7 @@ export function LandingExperience() {
       <div className="lab-grid" aria-hidden="true" />
       <div className="lab-aurora aurora-one" aria-hidden="true" /><div className="lab-aurora aurora-two" aria-hidden="true" />
       <div className="section-shell lab-hero-grid">
-        <motion.div className="lab-hero-copy" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: reducedMotion ? 0 : .09 } } }}>
+        <motion.div className="lab-hero-copy" initial={false} animate="visible" variants={{ visible: { transition: { staggerChildren: reducedMotion ? 0 : .09 } } }}>
           <motion.div className="lab-kicker" variants={reveal}><span /> {t("landing.kicker")}</motion.div>
           <motion.h1 variants={reveal}>{t("landing.titleStart")} <em>{t("landing.titleAccent")}</em></motion.h1>
           <motion.p variants={reveal}>{t("landing.description")}</motion.p>
@@ -110,7 +106,7 @@ export function LandingExperience() {
           </motion.div>
           <motion.div className="lab-proof" variants={reveal}><span><i>✓</i> {t("landing.privateWorkspace")}</span><span><i>✓</i> {t("landing.inventorReviewed")}</span><span><i>✓</i> {t("landing.exportReady")}</span></motion.div>
         </motion.div>
-        <motion.div initial={{ opacity: 0, scale: .94, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: reducedMotion ? 0 : .8, delay: .2 }}><AnalysisVisual /></motion.div>
+        <motion.div initial={false} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: reducedMotion ? 0 : .8, delay: .2 }}><AnalysisVisual /></motion.div>
       </div>
     </motion.section>
 
@@ -123,26 +119,26 @@ export function LandingExperience() {
 
     <section className="lab-workflow" id="lab-workflow">
       <div className="section-shell">
-        <motion.div className="lab-section-heading" initial="hidden" whileInView="visible" viewport={{ once: true, amount: .4 }} variants={reveal}>
+        <motion.div className="lab-section-heading" initial={false} whileInView="visible" viewport={{ once: true, amount: .4 }} variants={reveal}>
           <span className="lab-kicker"><i /> {t("landing.pipeline")}</span>
           <h2>{t("landing.pipelineTitleStart")} <em>{t("landing.pipelineTitleAccent")}</em></h2>
           <p>{t("landing.pipelineDescription")}</p>
         </motion.div>
         <div className="lab-workflow-track" aria-hidden="true"><span /></div>
-        <div className="lab-workflow-grid">
-          {workflow.map(([number, title, description], index) => <motion.article className="lab-step-card" initial="hidden" whileInView="visible" viewport={{ once: true, amount: .25 }} variants={reveal} transition={{ delay: reducedMotion ? 0 : index * .045 }} whileHover={reducedMotion ? undefined : { y: -7 }} key={number}>
-            <div><span>{number}</span><i>{index < 4 ? t("landing.active") : t("landing.pipeline")}</i></div><h3>{title}</h3><p>{description}</p><small>{t("landing.openStage")} <b aria-hidden="true">→</b></small>
+        <div className="lab-workflow-grid workshop-phase-grid">
+          {workflow.map((phase) => <motion.article className={`lab-step-card workshop-phase phase-${phase.id}`} initial={false} whileInView="visible" viewport={{ once: true, amount: .25 }} variants={reveal} transition={{ duration: reducedMotion ? 0 : .35 }} key={phase.id}>
+            <header><span>{phase.number}</span><strong>{phase.title}</strong></header><p>{phase.description}</p><ul>{phase.steps.map((step) => <li key={step}><i aria-hidden="true">✓</i>{step}</li>)}</ul><footer><span>{t("landing.phaseOutput")}</span><strong>{phase.output}</strong></footer>
           </motion.article>)}
         </div>
       </div>
     </section>
 
     <section className="lab-control"><div className="section-shell lab-control-grid">
-      <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: .35 }} variants={reveal}>
+      <motion.div initial={false} whileInView="visible" viewport={{ once: true, amount: .35 }} variants={reveal}>
         <span className="lab-kicker"><i /> {t("landing.humanLoop")}</span><h2>{t("landing.controlTitle")}<br /><em>{t("landing.controlAccent")}</em></h2><p>{t("landing.controlDescription")}</p>
         <ul><li><span>01</span>{t("landing.inspectComponents")}</li><li><span>02</span>{t("landing.correctAssumptions")}</li><li><span>03</span>{t("landing.approveFeatures")}</li></ul>
       </motion.div>
-      <motion.div className="lab-review-panel" initial={{ opacity: 0, x: 28 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: .35 }} transition={{ duration: reducedMotion ? 0 : .6 }}>
+      <motion.div className="lab-review-panel" initial={false} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: .35 }} transition={{ duration: reducedMotion ? 0 : .6 }}>
         <div className="review-panel-top"><span>{t("workspace.featureReview")} / 07</span><i>{t("status.actionRequired")}</i></div><h3>{t("landing.inspectComponents")}</h3><p>{t("landing.controlDescription")}</p><div className="review-confidence"><span>{t("landing.inventorReviewed")}</span><strong>71%</strong><i><b /></i></div><div className="review-question"><span>?</span><p><strong>{t("workspace.reviewRequired")}</strong>{t("clarification.description")}</p></div><div className="review-actions"><button type="button">{t("common.retry")}</button><button type="button">{t("features.approve")} ✓</button></div>
       </motion.div>
     </div></section>

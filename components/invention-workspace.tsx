@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useLanguage } from "@/components/language-provider";
 import {
   WORKSPACE_GROUP_LABELS,
   WORKSPACE_PANEL_SECTIONS,
   adjacentWorkspaceSection,
   resolveWorkspaceSection,
   workspaceSectionUrl,
-  type WorkspaceGroupId,
   type WorkspaceSectionId,
   type WorkspaceSectionState,
 } from "@/lib/patents/invention-workspace";
@@ -36,7 +36,6 @@ type WorkspaceNavigateDetail = { section?: WorkspaceSectionId; focusSelector?: s
 export function InventionWorkspace({
   sections,
   defaultSection,
-  completionPercentage,
   overview,
   details,
   images,
@@ -58,6 +57,7 @@ export function InventionWorkspace({
   drafting: ReactNode;
   activity: ReactNode;
 }) {
+  const { t } = useLanguage();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
@@ -68,6 +68,13 @@ export function InventionWorkspace({
   const next = adjacentWorkspaceSection(activeSection, 1);
   const panels = [overview, details, images, technicalReview, priorArt, overlap, drafting, activity];
   const mobileSelectRef = useRef<HTMLSelectElement>(null);
+  const recommendedState = sections.find((section) => section.id === defaultSection) ?? sections[0];
+  const workflowPhases = [
+    { id: "capture", label: t("workspace.phaseCapture"), description: t("workspace.phaseCaptureDescription"), sectionIds: ["invention-details", "images"] },
+    { id: "understand", label: t("workspace.phaseUnderstand"), description: t("workspace.phaseUnderstandDescription"), sectionIds: ["analysis", "feature-review"] },
+    { id: "compare", label: t("workspace.phaseCompare"), description: t("workspace.phaseCompareDescription"), sectionIds: ["patent-search", "comparison-matrix", "overlap-report"] },
+    { id: "protect", label: t("workspace.phaseProtect"), description: t("workspace.phaseProtectDescription"), sectionIds: ["patent-draft", "export"] },
+  ] as const;
 
   function navigate(section: WorkspaceSectionId, replace = false, focusSelector?: string) {
     const url = `${pathname}${workspaceSectionUrl(queryString, section)}`;
@@ -99,20 +106,16 @@ export function InventionWorkspace({
     return () => window.removeEventListener("inventra:workspace-navigate", handleNavigation);
   });
 
-  const grouped = (["setup", "technical", "prior-art", "drafting", "history"] as WorkspaceGroupId[])
-    .map((group) => ({ group, sections: sections.filter((section) => section.group === group) }));
-
   return <div className="invention-workspace">
-    <aside className="workspace-index">
-      <header><span>WORKFLOW INDEX</span><strong>{completionPercentage}% complete</strong><i><b style={{ width: `${completionPercentage}%` }} /></i></header>
-      <nav aria-label="Invention workflow sections">
-        {grouped.map(({ group, sections: groupSections }) => <section key={group}>
-          <h2>{WORKSPACE_GROUP_LABELS[group]}</h2>
-          <ul>{groupSections.map((section) => <li key={section.id}><button type="button" aria-current={section.id === activeSection ? "page" : undefined} onClick={() => navigate(section.id)}><span className="workspace-nav-icon" aria-hidden="true">{STATUS_ICONS[section.status]}</span><span><strong>{section.label}</strong><small>{STATUS_LABELS[section.status]}</small></span></button></li>)}</ul>
-        </section>)}
-      </nav>
-    </aside>
-
+    <section className="workspace-guidance" aria-labelledby="recommended-next-step"><div><span className="eyebrow">{t("workspace.recommendedNext")}</span><h2 id="recommended-next-step">{recommendedState.label}</h2><p>{recommendedState.explanation}</p></div><button type="button" onClick={() => navigate(recommendedState.id)}>{t("workspace.continueTo", { section: recommendedState.label.toLowerCase() })} <span aria-hidden="true">→</span></button></section>
+    <nav className="workspace-flow-header grouped-workflow" aria-label={t("workspace.workflowLabel")}><ol>{workflowPhases.map((phase, index) => {
+      const phaseSections = sections.filter((section) => (phase.sectionIds as readonly string[]).includes(section.id));
+      const current = phaseSections.some((section) => section.id === activeSection);
+      const locked = phaseSections.every((section) => Boolean(section.lockedMessage));
+      const phaseStatus = current ? "current" : phaseSections.every((section) => section.status === "COMPLETED") ? "complete" : phaseSections.some((section) => section.status === "ERROR") ? "error" : phaseSections.some((section) => section.status === "OUTDATED") ? "outdated" : locked ? "locked" : "not-started";
+      const status = phaseStatus === "current" ? t("status.current") : phaseStatus === "complete" ? t("status.complete") : phaseStatus === "error" ? t("status.error") : phaseStatus === "outdated" ? t("status.outdated") : phaseStatus === "locked" ? t("status.locked") : t("status.notStarted");
+      return <li key={phase.id} className={`phase-${phaseStatus}`}><header><span aria-hidden="true">{index + 1}</span><div><strong>{phase.label}</strong><small>{phase.description}</small></div><b>{status}</b></header><div>{phaseSections.map((section) => <button type="button" key={section.id} aria-current={section.id === activeSection ? "step" : undefined} onClick={() => navigate(section.id)} title={section.lockedMessage ?? section.explanation}><span aria-hidden="true">{STATUS_ICONS[section.status]}</span>{section.label}</button>)}</div></li>;
+    })}</ol></nav>
     <main className="workspace-main">
       <div className="workspace-mobile-selector">
         <button type="button" className="workspace-current-section" aria-label={`Current section: ${activeState.label}. Choose another section.`} onClick={() => mobileSelectRef.current?.focus()}><span>Current section</span><strong>{activeState.label}</strong></button>
